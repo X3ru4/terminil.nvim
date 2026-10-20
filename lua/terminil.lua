@@ -2,6 +2,7 @@
 ---@field use_default_keys boolean?
 ---@field keys [string, table]|terminil.keyset|vim.keymap.set.Opts?
 ---@field win_config vim.api.keyset.win_config? Default configuration for terminal windows when using the `M.open()` function.
+---@field buflisted boolean?
 
 ---@alias terminil.keyset {
 ---[1]: string|function,
@@ -57,6 +58,7 @@ M.config = {
 	win_config = {
 		split = 'below',
 	},
+	buflisted = false,
 }
 
 function H.setup_keys(keys)
@@ -124,6 +126,7 @@ function M.open(opts, default, cmd)
 		if cmd then
 			vim.api.nvim_chan_send(vim.bo[bufnr].channel, H.cmd_to_str(cmd))
 		end
+		vim.bo[bufnr].buflisted = M.config.buflisted
 	end)
 	vim.api.nvim_open_win(bufnr, true, opts)
 	H.win_data[bufnr] = opts
