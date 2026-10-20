@@ -31,7 +31,8 @@ Default configuration
 M.config = {
     use_default_keys = true,
     keys = {
-        ['<C-w>c'] = { '<cmd>hide<cr>', desc = 'Hide the window' },
+        ['<C-w>e'] = { '<cmd>hide<cr>', desc = 'Hide the window' },
+        ['<C-w>c'] = { '<cmd>silent! bdelete!<cr>', desc = 'Delete the terminal' },
         ['<C-w>s'] = { '<cmd>stopinsert<cr>', desc = 'Stop insert in terminal mode' },
         ['<C-w>n'] = {
             function()
