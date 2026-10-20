@@ -25,7 +25,7 @@ return {
 
 ### Configuration
 
-- Default configuration
+Default configuration
 
 ```lua
 M.config = {
