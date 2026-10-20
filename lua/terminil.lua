@@ -83,6 +83,20 @@ function H.cmd_to_str(cmd)
 	end
 end
 
+function H.is_term(buf)
+	return vim.bo[buf] and vim.bo[buf].buftype == 'terminal' and vim.bo[buf].filetype == ''
+end
+
+function H.open_buf(buf)
+	if H.is_term(buf) then
+		if H.win_data[buf] then
+			vim.api.nvim_open_win(buf, true, H.win_data[buf])
+		else
+			vim.api.nvim_set_current_buf(buf)
+		end
+	end
+end
+
 function H.setup_autocmd()
 	local autocmd = vim.api.nvim_create_autocmd
 	local group = vim.api.nvim_create_augroup('terminil.nvim', { clear = true })
@@ -114,11 +128,21 @@ end
 ---@param opts vim.api.keyset.win_config?
 ---@param default boolean?
 ---@param cmd string|string[]?
-function M.open(opts, default, cmd)
+---@param buf number?
+function M.open(opts, default, cmd, buf)
 	if default or default == nil then
 		opts = vim.tbl_deep_extend('force', M.config.win_config, opts or {})
 	end
+
+	if buf and H.is_term(buf) then
+		H.win_data[buf] = opts or H.win_data[buf]
+		H.open_buf(buf)
+		return
+	end
+
 	if not opts then
+		vim.cmd.terminal()
+		vim.cmd.startinsert()
 		return
 	end
 
@@ -162,11 +186,7 @@ function M.select(ui_select)
 		if not item then
 			return
 		end
-		if H.win_data[item.bufnr] then
-			vim.api.nvim_open_win(item.bufnr, true, H.win_data[item.bufnr])
-		else
-			vim.api.nvim_set_current_buf(item.bufnr)
-		end
+		H.open_buf(item.bufnr)
 	end)
 end
 
