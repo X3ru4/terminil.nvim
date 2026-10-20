@@ -147,6 +147,10 @@ function M.select(ui_select)
 			})
 		end
 	end
+	if #term_bufs == 0 then
+		vim.notify('No terminal exists.')
+		return
+	end
 	local opts = {
 		prompt = 'Select terminal: ',
 		format_item = function(item)
