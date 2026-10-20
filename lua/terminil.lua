@@ -100,6 +100,7 @@ function H.setup_autocmd()
 				end
 				H.win_data[ev.buf] = vim.api.nvim_win_get_config(0)
 			end
+			vim.cmd.startinsert()
 		end,
 	})
 	autocmd('TermClose', {
