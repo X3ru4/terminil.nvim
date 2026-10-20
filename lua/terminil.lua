@@ -91,6 +91,7 @@ function H.setup_autocmd()
 		group = group,
 		callback = function(ev)
 			if not H.win_data[ev.buf] then
+				vim.cmd.startinsert()
 				local wins = vim.api.nvim_tabpage_list_wins(0)
 				local normal_wins = vim.tbl_filter(function(win)
 					return vim.api.nvim_win_get_config(win).relative == ''
@@ -100,7 +101,6 @@ function H.setup_autocmd()
 				end
 				H.win_data[ev.buf] = vim.api.nvim_win_get_config(0)
 			end
-			vim.cmd.startinsert()
 		end,
 	})
 	autocmd('TermClose', {
