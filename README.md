@@ -70,5 +70,6 @@ M.config = {
     win_config = {
         split = 'below',
     },
+    buflisted = false,
 }
 ```
