@@ -49,21 +49,20 @@ end)
 
 ```lua
 vim.keymap.set('n', '...', function()
-    local width = terminil.helper.size('width', 0.7)
-    local height = terminil.helper.size('height', 0.6)
-    terminil.open({
-        relative = 'editor',
-        title = ' >_ Terminal ',
-        title_pos = 'center',
-        width = width,
-        height = height,
-        -- Center the floating window.
-        row = math.ceil((vim.o.lines - height) / 2) - 2,
-        col = math.ceil((vim.o.columns - width) / 2),
-    }, {
+    terminil.open({ split = 'below' }, {
         cmd = { 'git status', 'fzf' }, -- or 'git status'
     })
 end)
+```
+
+### Give the terminal a custom name using the `buf_call` function
+
+```lua
+terminil.open(nil, {
+    buf_call = function(buf)
+        vim.api.nvim_buf_set_name(buf, 'Terminil hihi')
+    end,
+})
 ```
 
 ## Configuration
