@@ -1,8 +1,8 @@
 # terminil.nvim
 
-## A simple plugin that makes interacting with the terminal easier.
+A simple plugin that makes interacting with the terminal easier.
 
-### Installation
+## Installation
 
 With vim.pack
 
@@ -23,7 +23,50 @@ return {
 }
 ```
 
-### Configuration
+## Cooking recipes
+
+### Terminal in floating window
+
+```lua
+local terminil = require('terminil')
+vim.keymap.set('n', '<leader>tf', function()
+    local width = terminil.helper.size('width', 0.7)
+    local height = terminil.helper.size('height', 0.6)
+    terminil.open({
+        relative = 'editor',
+        title = ' >_ Terminal ',
+        title_pos = 'center',
+        width = width,
+        height = height,
+        -- Center the floating window.
+        row = math.ceil((vim.o.lines - height) / 2) - 2,
+        col = math.ceil((vim.o.columns - width) / 2),
+    })
+end)
+```
+
+### Run shell commands when the terminal window is open
+
+```lua
+vim.keymap.set('n', '...', function()
+    local width = terminil.helper.size('width', 0.7)
+    local height = terminil.helper.size('height', 0.6)
+    terminil.open({
+        relative = 'editor',
+        title = ' >_ Terminal ',
+        title_pos = 'center',
+        width = width,
+        height = height,
+        -- Center the floating window.
+        row = math.ceil((vim.o.lines - height) / 2) - 2,
+        col = math.ceil((vim.o.columns - width) / 2),
+    }, {
+        cmd = { 'git status', 'fzf' }, -- or 'git status'
+    })
+end)
+```
+
+## Configuration
 
 Default configuration
 
