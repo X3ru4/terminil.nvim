@@ -2,7 +2,14 @@
 ---@field use_default_keys boolean?
 ---@field keys [string, table]|terminil.keyset|vim.keymap.set.Opts?
 ---@field win_config vim.api.keyset.win_config? Default configuration for terminal windows when using the `M.open()` function.
+---@field on_open fun(buf: number, chan: number)?
 ---@field buflisted boolean?
+
+---@class terminil.open.opts
+---@field cmd string|string[]?
+---@field default boolean? If set to `true`, it will use the default window configuration from `M.config.win_config`, and vice versa.
+---@field buf number?
+---@field buf_call fun(buf: number)? This function will be called within the `nvim_buf_call` function.
 
 ---@alias terminil.keyset {
 ---[1]: string|function,
@@ -60,6 +67,7 @@ M.config = {
 	win_config = {
 		split = 'below',
 	},
+	on_open = function(buf, chan) end,
 	buflisted = false,
 }
 
@@ -87,6 +95,14 @@ function H.is_term(buf)
 	return vim.bo[buf] and vim.bo[buf].buftype == 'terminal' and vim.bo[buf].filetype == ''
 end
 
+---@param axis 'height'|'width'
+---@param percent number 0.0->1.0
+---@return number
+function H.size(axis, percent)
+	local total = axis == 'height' and vim.o.lines or vim.o.columns
+	return math.ceil(total * percent)
+end
+
 function H.open_buf(buf)
 	if H.is_term(buf) then
 		if H.win_data[buf] then
@@ -104,17 +120,19 @@ function H.setup_autocmd()
 	autocmd('TermOpen', {
 		group = group,
 		callback = function(ev)
-			if not H.win_data[ev.buf] then
-				vim.cmd.startinsert()
-				local wins = vim.api.nvim_tabpage_list_wins(0)
-				local normal_wins = vim.tbl_filter(function(win)
-					return vim.api.nvim_win_get_config(win).relative == ''
-				end, wins)
-				if #normal_wins == 1 then
-					return
-				end
-				H.win_data[ev.buf] = vim.api.nvim_win_get_config(0)
+			M.config.on_open(ev.buf, vim.bo[ev.buf].channel)
+			if H.win_data[ev.buf] then
+				return
 			end
+			vim.cmd.startinsert()
+			local wins = vim.api.nvim_tabpage_list_wins(0)
+			local normal_wins = vim.tbl_filter(function(win)
+				return vim.api.nvim_win_get_config(win).relative == ''
+			end, wins)
+			if #normal_wins == 1 then
+				return
+			end
+			H.win_data[ev.buf] = vim.api.nvim_win_get_config(0)
 		end,
 	})
 	autocmd('TermClose', {
@@ -125,22 +143,21 @@ function H.setup_autocmd()
 	})
 end
 
----@param opts vim.api.keyset.win_config?
----@param default boolean?
----@param cmd string|string[]?
----@param buf number?
-function M.open(opts, default, cmd, buf)
-	if default or default == nil then
-		opts = vim.tbl_deep_extend('force', M.config.win_config, opts or {})
+---@param win_config vim.api.keyset.win_config?
+---@param opts terminil.open.opts?
+function M.open(win_config, opts)
+	opts = opts or {}
+	if opts.default then
+		win_config = vim.tbl_deep_extend('force', M.config.win_config, win_config or {})
 	end
 
-	if buf and H.is_term(buf) then
-		H.win_data[buf] = opts or H.win_data[buf]
-		H.open_buf(buf)
+	if opts.buf and H.is_term(opts.buf) then
+		H.win_data[opts.buf] = win_config or H.win_data[opts.buf]
+		H.open_buf(opts.buf)
 		return
 	end
 
-	if not opts then
+	if not win_config then
 		vim.cmd.terminal()
 		vim.cmd.startinsert()
 		return
@@ -150,13 +167,16 @@ function M.open(opts, default, cmd, buf)
 	vim.api.nvim_buf_call(bufnr, function()
 		vim.cmd.terminal()
 		vim.cmd.startinsert()
-		if cmd then
-			vim.api.nvim_chan_send(vim.bo[bufnr].channel, H.cmd_to_str(cmd))
+		if opts.cmd then
+			vim.api.nvim_chan_send(vim.bo[bufnr].channel, H.cmd_to_str(opts.cmd))
 		end
 		vim.bo[bufnr].buflisted = M.config.buflisted
+		if opts.buf_call then
+			opts.buf_call(bufnr)
+		end
 	end)
-	vim.api.nvim_open_win(bufnr, true, opts)
-	H.win_data[bufnr] = opts
+	vim.api.nvim_open_win(bufnr, true, win_config)
+	H.win_data[bufnr] = win_config
 end
 
 ---@generic T
@@ -165,7 +185,7 @@ function M.select(ui_select)
 	local bufs = vim.api.nvim_list_bufs()
 	local term_bufs = {}
 	for _, buf in ipairs(bufs) do
-		if vim.bo[buf].buftype == 'terminal' and vim.bo[buf].filetype == '' then
+		if H.is_term(buf) then
 			table.insert(term_bufs, {
 				name = vim.fs.basename(vim.api.nvim_buf_get_name(buf)),
 				bufnr = buf,
