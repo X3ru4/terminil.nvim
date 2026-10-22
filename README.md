@@ -72,6 +72,12 @@ terminil.open(nil, {
 })
 ```
 
+### Open with a different shell
+
+```lua
+terminil.open(nil, { shell = 'zsh' })
+```
+
 ### Disable default keymaps
 
 ```lua
@@ -149,6 +155,7 @@ M.config = {
     win_config = {
         split = 'below',
     },
+    term_opts = {},
     on_open = function(buf, chan) end,
     buflisted = false,
 }
