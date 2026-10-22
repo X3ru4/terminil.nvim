@@ -43,7 +43,13 @@ M.config = {
 			end,
 			desc = 'Remame the terminal',
 		},
-		['<leader>tt'] = { '<cmd>terminal<cr>', mode = 'n', desc = 'Open new terminal' },
+		['<leader>tt'] = {
+			function()
+				M.open()
+			end,
+			mode = 'n',
+			desc = 'Open new terminal',
+		},
 		['<leader>th'] = {
 			function()
 				M.open({ split = vim.o.splitbelow and 'below' or 'above' })
@@ -191,8 +197,6 @@ end
 ---@param opts terminil.open.opts?
 function M.open(win_config, opts)
 	opts = vim.tbl_deep_extend('force', M.config.term_opts, opts or {})
-	local shell = vim.o.shell
-	vim.o.shell = opts.shell or vim.o.shell
 	if opts.default then
 		win_config = vim.tbl_deep_extend('force', M.config.win_config, win_config or {})
 	end
@@ -203,26 +207,39 @@ function M.open(win_config, opts)
 		return
 	end
 
-	if not win_config then
-		vim.cmd.terminal()
-		return
-	end
+	local shell = vim.o.shell
+	vim.o.shell = opts.shell or vim.o.shell
 
-	local bufnr = vim.api.nvim_create_buf(false, true)
-	H.termdata[bufnr] = win_config
-	vim.api.nvim_buf_call(bufnr, function()
-		vim.cmd.terminal()
-		if opts.cmd then
-			vim.api.nvim_chan_send(vim.bo[bufnr].channel, H.cmd_to_str(opts.cmd))
-		end
-		vim.bo[bufnr].buflisted = M.config.buflisted
-		if opts.buf_call then
-			opts.buf_call(bufnr)
+	local ok, err = pcall(function()
+		if not win_config then
+			vim.cmd.terminal()
+			local bufnr = vim.api.nvim_get_current_buf()
+			vim.bo[bufnr].buflisted = M.config.buflisted
+			if opts.cmd then
+				vim.api.nvim_chan_send(vim.bo[bufnr].channel, H.cmd_to_str(opts.cmd))
+			end
+		else
+			local bufnr = vim.api.nvim_create_buf(false, true)
+			H.termdata[bufnr] = win_config
+			vim.api.nvim_buf_call(bufnr, function()
+				vim.cmd.terminal()
+				vim.bo[bufnr].buflisted = M.config.buflisted
+				if opts.cmd then
+					vim.api.nvim_chan_send(vim.bo[bufnr].channel, H.cmd_to_str(opts.cmd))
+				end
+				if opts.buf_call then
+					opts.buf_call(bufnr)
+				end
+			end)
+			local winid = vim.api.nvim_open_win(bufnr, true, win_config)
+			H.termdata.opening[bufnr] = winid
 		end
 	end)
-	local winid = vim.api.nvim_open_win(bufnr, true, win_config)
-	H.termdata.opening[bufnr] = winid
+
 	vim.o.shell = shell
+	if not ok and err then
+		vim.notify(err, vim.log.levels.ERROR)
+	end
 end
 
 ---@generic T
