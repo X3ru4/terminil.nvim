@@ -27,10 +27,10 @@ H.win_data = {}
 M.config = {
 	use_default_keys = true,
 	keys = {
-		['<C-w>e'] = { '<cmd>hide<cr>', desc = 'Hide the window' },
-		['<C-w>c'] = { '<cmd>silent! bdelete!<cr>', desc = 'Delete the terminal' },
-		['<C-w>s'] = { '<cmd>stopinsert<cr>', desc = 'Stop insert in terminal mode' },
-		['<C-w>n'] = {
+		['<C-t>h'] = { '<cmd>hide<cr>', desc = 'Hide the window' },
+		['<C-t>d'] = { '<cmd>silent! bdelete!<cr>', desc = 'Delete the terminal' },
+		['<C-t>t'] = { '<cmd>stopinsert<cr>', desc = 'Stop insert in terminal mode' },
+		['<C-t>n'] = {
 			function()
 				vim.ui.input({ prompt = 'New name: ' }, function(input)
 					if not input then
@@ -55,6 +55,23 @@ M.config = {
 			end,
 			mode = 'n',
 			desc = 'Open new vsplit terminal',
+		},
+		['<leader>tf'] = {
+			function()
+				local width = H.size('width', 0.7)
+				local height = H.size('height', 0.6)
+				M.open({
+					relative = 'editor',
+					title = ' >_ Terminal ',
+					title_pos = 'center',
+					width = width,
+					height = height,
+					row = math.ceil((vim.o.lines - height) / 2) - 2,
+					col = math.ceil((vim.o.columns - width) / 2),
+				})
+			end,
+			mode = 'n',
+			desc = 'Open new float terminal',
 		},
 		['<leader>ts'] = {
 			function()
