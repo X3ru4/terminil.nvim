@@ -1,6 +1,6 @@
 ---@class terminil.opts
 ---@field use_default_keys boolean?
----@field keys [string, table]|terminil.keyset|vim.keymap.set.Opts?
+---@field keys [string, table|terminil.keyset|vim.keymap.set.Opts|false]?
 ---@field win_config vim.api.keyset.win_config? Default configuration for terminal windows when using the `M.open()` function.
 ---@field on_open fun(buf: number, chan: number)?
 ---@field buflisted boolean?
@@ -41,7 +41,7 @@ M.config = {
 			end,
 			desc = 'Remame the terminal',
 		},
-		['<leader>tt'] = { '<cmd>terminal<cr>i', mode = 'n', desc = 'Open new terminal' },
+		['<leader>tt'] = { '<cmd>terminal<cr>', mode = 'n', desc = 'Open new terminal' },
 		['<leader>th'] = {
 			function()
 				M.open({ split = vim.o.splitbelow and 'below' or 'above' })
@@ -90,10 +90,12 @@ M.config = {
 
 function H.setup_keys(keys)
 	for key, value in pairs(keys) do
-		local mode = value.mode or 't'
-		local rhs = value[1]
-		value[1], value.mode = nil, nil
-		vim.keymap.set(mode, key, rhs, value)
+		if value then
+			local mode = value.mode or 't'
+			local rhs = value[1]
+			value[1], value.mode = nil, nil
+			vim.keymap.set(mode, key, rhs, value)
+		end
 	end
 end
 
