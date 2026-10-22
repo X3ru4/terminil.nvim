@@ -20,7 +20,7 @@ local M = {}
 local H = {}
 M.helper = H
 
-H.win_data = {}
+H.termdata = { opening = {} }
 
 ---Default configuration
 ---@type terminil.opts
@@ -122,8 +122,13 @@ end
 
 function H.open_buf(buf)
 	if H.is_term(buf) then
-		if H.win_data[buf] then
-			vim.api.nvim_open_win(buf, true, H.win_data[buf])
+		if H.termdata[buf] then
+			local winid = H.termdata.opening[buf]
+			if winid and vim.tbl_contains(vim.api.nvim_tabpage_list_wins(0), winid) then
+				vim.api.nvim_set_current_win(winid)
+			else
+				vim.api.nvim_open_win(buf, true, H.termdata[buf])
+			end
 		else
 			vim.api.nvim_set_current_buf(buf)
 		end
@@ -138,7 +143,7 @@ function H.setup_autocmd()
 		group = group,
 		callback = function(ev)
 			M.config.on_open(ev.buf, vim.bo[ev.buf].channel)
-			if H.win_data[ev.buf] then
+			if H.termdata[ev.buf] then
 				return
 			end
 			vim.cmd.startinsert()
@@ -149,13 +154,14 @@ function H.setup_autocmd()
 			if #normal_wins == 1 then
 				return
 			end
-			H.win_data[ev.buf] = vim.api.nvim_win_get_config(0)
+			H.termdata[ev.buf] = vim.api.nvim_win_get_config(0)
 		end,
 	})
 	autocmd('TermClose', {
 		group = group,
 		callback = function(ev)
-			H.win_data[ev.buf] = nil
+			H.termdata[ev.buf] = nil
+			H.termdata.opening[ev.buf] = nil
 		end,
 	})
 end
@@ -169,7 +175,7 @@ function M.open(win_config, opts)
 	end
 
 	if opts.buf and H.is_term(opts.buf) then
-		H.win_data[opts.buf] = win_config or H.win_data[opts.buf]
+		H.termdata[opts.buf] = win_config or H.termdata[opts.buf]
 		H.open_buf(opts.buf)
 		return
 	end
@@ -192,8 +198,9 @@ function M.open(win_config, opts)
 			opts.buf_call(bufnr)
 		end
 	end)
-	vim.api.nvim_open_win(bufnr, true, win_config)
-	H.win_data[bufnr] = win_config
+	local winid = vim.api.nvim_open_win(bufnr, true, win_config)
+	H.termdata[bufnr] = win_config
+	H.termdata.opening[bufnr] = winid
 end
 
 ---@generic T
