@@ -2,6 +2,13 @@
 
 A simple plugin that makes interacting with the terminal easier.
 
+## Features
+
+- Open the terminal and configure your own window.
+- Floating terminal window.
+- Reopening a hidden terminal window retains the window's state using the `M.select()` function.
+- Provides several useful helper functions.
+
 ## Installation
 
 With vim.pack
