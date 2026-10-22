@@ -2,12 +2,14 @@
 ---@field use_default_keys boolean?
 ---@field keys [string, table|terminil.keyset|vim.keymap.set.Opts|false]?
 ---@field win_config vim.api.keyset.win_config? Default configuration for terminal windows when using the `M.open()` function.
+---@field term_opts terminil.open.opts?
 ---@field on_open fun(buf: number, chan: number)?
 ---@field buflisted boolean?
 
 ---@class terminil.open.opts
 ---@field cmd string|string[]?
 ---@field default boolean? If set to `true`, it will use the default window configuration from `M.config.win_config`, and vice versa.
+---@field shell string?
 ---@field buf number?
 ---@field buf_call fun(buf: number)? This function will be called within the `nvim_buf_call` function.
 
@@ -84,6 +86,7 @@ M.config = {
 	win_config = {
 		split = 'below',
 	},
+	term_opts = {},
 	on_open = function(buf, chan) end,
 	buflisted = false,
 }
@@ -187,7 +190,9 @@ end
 ---@param win_config vim.api.keyset.win_config?
 ---@param opts terminil.open.opts?
 function M.open(win_config, opts)
-	opts = opts or {}
+	opts = vim.tbl_deep_extend('force', M.config.term_opts, opts or {})
+	local shell = vim.o.shell
+	vim.o.shell = opts.shell or vim.o.shell
 	if opts.default then
 		win_config = vim.tbl_deep_extend('force', M.config.win_config, win_config or {})
 	end
@@ -200,7 +205,6 @@ function M.open(win_config, opts)
 
 	if not win_config then
 		vim.cmd.terminal()
-		vim.cmd.startinsert()
 		return
 	end
 
@@ -208,7 +212,6 @@ function M.open(win_config, opts)
 	H.termdata[bufnr] = win_config
 	vim.api.nvim_buf_call(bufnr, function()
 		vim.cmd.terminal()
-		vim.cmd.startinsert()
 		if opts.cmd then
 			vim.api.nvim_chan_send(vim.bo[bufnr].channel, H.cmd_to_str(opts.cmd))
 		end
@@ -219,6 +222,7 @@ function M.open(win_config, opts)
 	end)
 	local winid = vim.api.nvim_open_win(bufnr, true, win_config)
 	H.termdata.opening[bufnr] = winid
+	vim.o.shell = shell
 end
 
 ---@generic T
