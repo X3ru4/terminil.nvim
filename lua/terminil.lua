@@ -144,11 +144,11 @@ function H.setup_autocmd()
 	autocmd('TermOpen', {
 		group = group,
 		callback = function(ev)
+			vim.cmd.startinsert()
 			M.config.on_open(ev.buf, vim.bo[ev.buf].channel)
 			if H.termdata[ev.buf] then
 				return
 			end
-			vim.cmd.startinsert()
 			local wins = vim.api.nvim_tabpage_list_wins(0)
 			local normal_wins = vim.tbl_filter(function(win)
 				return vim.api.nvim_win_get_config(win).relative == ''
@@ -164,6 +164,22 @@ function H.setup_autocmd()
 		callback = function(ev)
 			H.termdata[ev.buf] = nil
 			H.termdata.opening[ev.buf] = nil
+		end,
+	})
+	autocmd('WinEnter', {
+		group = group,
+		callback = function(ev)
+			if H.is_term(ev.buf) then
+				H.termdata.opening[ev.buf] = vim.api.nvim_get_current_win()
+			end
+		end,
+	})
+	autocmd('WinClosed', {
+		group = group,
+		callback = function(ev)
+			if H.termdata.opening[ev.buf] then
+				H.termdata.opening[ev.buf] = nil
+			end
 		end,
 	})
 end
@@ -189,6 +205,7 @@ function M.open(win_config, opts)
 	end
 
 	local bufnr = vim.api.nvim_create_buf(false, true)
+	H.termdata[bufnr] = win_config
 	vim.api.nvim_buf_call(bufnr, function()
 		vim.cmd.terminal()
 		vim.cmd.startinsert()
@@ -201,7 +218,6 @@ function M.open(win_config, opts)
 		end
 	end)
 	local winid = vim.api.nvim_open_win(bufnr, true, win_config)
-	H.termdata[bufnr] = win_config
 	H.termdata.opening[bufnr] = winid
 end
 
