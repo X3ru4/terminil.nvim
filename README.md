@@ -112,7 +112,13 @@ M.config = {
             end,
             desc = 'Remame the terminal',
         },
-        ['<leader>tt'] = { '<cmd>terminal<cr>i', mode = 'n', desc = 'Open new terminal' },
+        ['<leader>tt'] = {
+            function()
+                M.open()
+            end,
+            mode = 'n',
+            desc = 'Open new terminal',
+        },
         ['<leader>th'] = {
             function()
                 M.open({ split = vim.o.splitbelow and 'below' or 'above' })
