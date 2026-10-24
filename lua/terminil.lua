@@ -210,13 +210,14 @@ function M.open(win_config, opts)
 		return
 	end
 
-	if vim.fn.executable(opts.shell or vim.o.shell) ~= 1 then
-		vim.notify('Invalid shell "' .. (opts.shell or vim.o.shell) .. '"', vim.log.levels.ERROR)
-		return
-	end
-
 	local shell = vim.o.shell
-	vim.opt.shell = opts.shell or vim.o.shell
+
+	if opts.shell and vim.fn.executable(opts.shell) ~= 1 then
+		vim.notify('Invalid shell "' .. opts.shell .. '"', vim.log.levels.ERROR)
+		vim.notify('The terminal will use the default shell.')
+	else
+		vim.opt.shell = opts.shell
+	end
 
 	local ok, err = pcall(function()
 		if not win_config then
