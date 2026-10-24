@@ -43,28 +43,28 @@ M.config = {
 			end,
 			desc = 'Remame the terminal',
 		},
-		['<leader>tt'] = {
+		['gtt'] = {
 			function()
 				M.open()
 			end,
 			mode = 'n',
 			desc = 'Open new terminal',
 		},
-		['<leader>th'] = {
+		['gth'] = {
 			function()
 				M.open({ split = vim.o.splitbelow and 'below' or 'above' })
 			end,
 			mode = 'n',
 			desc = 'Open new split terminal',
 		},
-		['<leader>tv'] = {
+		['gtv'] = {
 			function()
 				M.open({ split = vim.o.splitright and 'right' or 'left' })
 			end,
 			mode = 'n',
 			desc = 'Open new vsplit terminal',
 		},
-		['<leader>tf'] = {
+		['gtf'] = {
 			function()
 				local width = H.size('width', 0.7)
 				local height = H.size('height', 0.6)
@@ -81,7 +81,7 @@ M.config = {
 			mode = 'n',
 			desc = 'Open new float terminal',
 		},
-		['<leader>ts'] = {
+		['gts'] = {
 			function()
 				M.select()
 			end,
@@ -119,8 +119,11 @@ function H.cmd_to_str(cmd)
 	end
 end
 
+local exclude_ft = {
+	fzf = true,
+}
 function H.is_term(buf)
-	return vim.bo[buf] and vim.bo[buf].buftype == 'terminal' and vim.bo[buf].filetype == ''
+	return vim.bo[buf] and vim.bo[buf].buftype == 'terminal' and not exclude_ft[vim.bo[buf].filetype]
 end
 
 ---@param axis 'height'|'width'
