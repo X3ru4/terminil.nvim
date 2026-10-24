@@ -211,7 +211,7 @@ function M.open(win_config, opts)
 	end
 
 	local shell = vim.o.shell
-	vim.o.shell = opts.shell or vim.o.shell
+	vim.opt.shell = opts.shell or vim.opt.shell
 
 	local ok, err = pcall(function()
 		if not win_config then
@@ -239,7 +239,7 @@ function M.open(win_config, opts)
 		end
 	end)
 
-	vim.o.shell = shell
+	vim.opt.shell = shell
 	if not ok and err then
 		vim.notify(err, vim.log.levels.ERROR)
 	end
