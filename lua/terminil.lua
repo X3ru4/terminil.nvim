@@ -43,28 +43,28 @@ M.config = {
 			end,
 			desc = 'Remame the terminal',
 		},
-		['gtt'] = {
+		['<leader>tt'] = {
 			function()
 				M.open()
 			end,
 			mode = 'n',
 			desc = 'Open new terminal',
 		},
-		['gth'] = {
+		['<leader>th'] = {
 			function()
 				M.open({ split = vim.o.splitbelow and 'below' or 'above' })
 			end,
 			mode = 'n',
 			desc = 'Open new split terminal',
 		},
-		['gtv'] = {
+		['<leader>tv'] = {
 			function()
 				M.open({ split = vim.o.splitright and 'right' or 'left' })
 			end,
 			mode = 'n',
 			desc = 'Open new vsplit terminal',
 		},
-		['gtf'] = {
+		['<leader>tf'] = {
 			function()
 				local width = H.size('width', 0.7)
 				local height = H.size('height', 0.6)
@@ -81,7 +81,7 @@ M.config = {
 			mode = 'n',
 			desc = 'Open new float terminal',
 		},
-		['gts'] = {
+		['<leader>ts'] = {
 			function()
 				M.select()
 			end,
