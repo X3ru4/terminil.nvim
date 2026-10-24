@@ -210,8 +210,13 @@ function M.open(win_config, opts)
 		return
 	end
 
+	if vim.fn.executable(opts.shell or vim.o.shell) ~= 1 then
+		vim.notify('Invalid "' .. (opts.shell or vim.o.shell) .. '" shell!', vim.log.levels.ERROR)
+		return
+	end
+
 	local shell = vim.o.shell
-	vim.opt.shell = opts.shell or vim.opt.shell
+	vim.opt.shell = opts.shell or vim.o.shell
 
 	local ok, err = pcall(function()
 		if not win_config then
