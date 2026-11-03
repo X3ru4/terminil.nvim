@@ -374,30 +374,32 @@ function M.select(ui_select)
 end
 
 ---Open multiple terminal windows at the same time.
----@param count number? >1
----@param horizontal 'above'|'below'?
----@param vertical 'left'|'right'?
-function M.open_multiple(count, horizontal, vertical)
+---@param count number|false? >1
+---@param cycles string[]?
+---@param opts terminil.open.opts?
+function M.open_multiple(count, cycles, opts)
 	count = count or vim.v.count1
+
 	local i_cycle = 1
-	local cycles = {
-		horizontal or H.default_split('horizontal'),
-		vertical or H.default_split('vertical'),
-	}
-
-	local termwins = H.list_termwins()
-
-	if termwins[#termwins] then
-		local split = api.nvim_win_get_config(termwins[#termwins]).split
-		if split == 'above' or split == 'below' then
-			i_cycle = 2
-			count = count + 1
+	if not cycles then
+		local termwins = H.list_termwins()
+		if termwins[#termwins] then
+			local split = api.nvim_win_get_config(termwins[#termwins]).split
+			if split == 'above' or split == 'below' then
+				i_cycle = 2
+				count = count + 1
+			end
 		end
 	end
 
+	cycles = cycles or {
+		H.default_split('horizontal'),
+		H.default_split('vertical'),
+	}
+
 	for i = i_cycle, count do
-		i_cycle = ((i - 1) % 2) + 1
-		M.open({ split = cycles[i_cycle] })
+		i_cycle = ((i - 1) % #cycles) + 1
+		M.open({ split = cycles[i_cycle] }, opts)
 	end
 end
 
