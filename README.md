@@ -90,6 +90,18 @@ opts = {
 }
 ```
 
+### Open multiple windows at the same time
+
+```lua
+terminil.open_multiple(3)
+```
+
+Split in your own style
+
+```lua
+terminil.open_multiple(5, { 'above', 'left', 'right' })
+```
+
 ## Configuration
 
-[Default configuration](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L29-L98)
+[Default configuration](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L32-L161)
