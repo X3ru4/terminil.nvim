@@ -14,15 +14,17 @@
 ---@field buf_call fun(buf: number)? This function will be called within the `nvim_buf_call` function.
 
 ---@alias terminil.keyset {
----[1]: string|function,
----mode: string|string[],
+---		[1]: string|function,
+---		mode: string|string[],
 ---}
 
 local M = {}
 local H = {}
 M.helper = H
 
-H.termdata = { opening = {} }
+H.windata = { opening = {} }
+
+local api = vim.api
 
 ---Default configuration
 ---@type terminil.opts
@@ -30,7 +32,16 @@ M.config = {
 	use_default_keys = true,
 	keys = {
 		['<C-t>h'] = { '<cmd>hide<cr>', desc = 'Hide the window' },
-		['<C-t>d'] = { '<cmd>silent! bdelete!<cr>', desc = 'Delete the terminal' },
+		['<C-t>d'] = {
+			function()
+				local buf = api.nvim_win_get_buf(0)
+				if H.windata[buf] then
+					api.nvim_win_close(0, false)
+				end
+				api.nvim_buf_delete(buf, { force = true })
+			end,
+			desc = 'Delete the terminal',
+		},
 		['<C-t>t'] = { '<cmd>stopinsert<cr>', desc = 'Stop insert in terminal mode' },
 		['<C-t>n'] = {
 			function()
@@ -38,7 +49,7 @@ M.config = {
 					if not input then
 						return
 					end
-					vim.api.nvim_buf_set_name(0, input)
+					api.nvim_buf_set_name(0, input)
 				end)
 			end,
 			desc = 'Remame the terminal',
@@ -136,61 +147,61 @@ end
 
 function H.open_buf(buf)
 	if H.is_term(buf) then
-		if H.termdata[buf] then
-			local winid = H.termdata.opening[buf]
-			if winid and vim.tbl_contains(vim.api.nvim_tabpage_list_wins(0), winid) then
-				vim.api.nvim_set_current_win(winid)
+		if H.windata[buf] then
+			local winid = H.windata.opening[buf]
+			if winid and vim.tbl_contains(api.nvim_tabpage_list_wins(0), winid) then
+				api.nvim_set_current_win(winid)
 			else
-				vim.api.nvim_open_win(buf, true, H.termdata[buf])
+				api.nvim_open_win(buf, true, H.windata[buf])
 			end
 		else
-			vim.api.nvim_set_current_buf(buf)
+			api.nvim_set_current_buf(buf)
 		end
 	end
 end
 
 function H.setup_autocmd()
-	local autocmd = vim.api.nvim_create_autocmd
-	local group = vim.api.nvim_create_augroup('terminil.nvim', { clear = true })
+	local autocmd = api.nvim_create_autocmd
+	local group = api.nvim_create_augroup('terminil.nvim', { clear = true })
 
 	autocmd('TermOpen', {
 		group = group,
 		callback = function(ev)
 			vim.cmd.startinsert()
 			M.config.on_open(ev.buf, vim.bo[ev.buf].channel)
-			if H.termdata[ev.buf] then
+			if H.windata[ev.buf] then
 				return
 			end
-			local wins = vim.api.nvim_tabpage_list_wins(0)
+			local wins = api.nvim_tabpage_list_wins(0)
 			local normal_wins = vim.tbl_filter(function(win)
-				return vim.api.nvim_win_get_config(win).relative == ''
+				return api.nvim_win_get_config(win).relative == ''
 			end, wins)
 			if #normal_wins == 1 then
 				return
 			end
-			H.termdata[ev.buf] = vim.api.nvim_win_get_config(0)
+			H.windata[ev.buf] = api.nvim_win_get_config(0)
 		end,
 	})
 	autocmd('TermClose', {
 		group = group,
 		callback = function(ev)
-			H.termdata[ev.buf] = nil
-			H.termdata.opening[ev.buf] = nil
+			H.windata[ev.buf] = nil
+			H.windata.opening[ev.buf] = nil
 		end,
 	})
 	autocmd('WinEnter', {
 		group = group,
 		callback = function(ev)
 			if H.is_term(ev.buf) then
-				H.termdata.opening[ev.buf] = vim.api.nvim_get_current_win()
+				H.windata.opening[ev.buf] = api.nvim_get_current_win()
 			end
 		end,
 	})
 	autocmd('WinClosed', {
 		group = group,
 		callback = function(ev)
-			if H.termdata.opening[ev.buf] then
-				H.termdata.opening[ev.buf] = nil
+			if H.windata.opening[ev.buf] then
+				H.windata.opening[ev.buf] = nil
 			end
 		end,
 	})
@@ -205,7 +216,7 @@ function M.open(win_config, opts)
 	end
 
 	if opts.buf and H.is_term(opts.buf) then
-		H.termdata[opts.buf] = win_config or H.termdata[opts.buf]
+		H.windata[opts.buf] = win_config or H.windata[opts.buf]
 		H.open_buf(opts.buf)
 		return
 	end
@@ -224,26 +235,26 @@ function M.open(win_config, opts)
 	local ok, err = pcall(function()
 		if not win_config then
 			vim.cmd.terminal()
-			local bufnr = vim.api.nvim_get_current_buf()
+			local bufnr = api.nvim_get_current_buf()
 			vim.bo[bufnr].buflisted = M.config.buflisted
 			if opts.cmd then
-				vim.api.nvim_chan_send(vim.bo[bufnr].channel, H.cmd_to_str(opts.cmd))
+				api.nvim_chan_send(vim.bo[bufnr].channel, H.cmd_to_str(opts.cmd))
 			end
 		else
-			local bufnr = vim.api.nvim_create_buf(false, true)
-			H.termdata[bufnr] = win_config
-			vim.api.nvim_buf_call(bufnr, function()
+			local bufnr = api.nvim_create_buf(false, true)
+			H.windata[bufnr] = win_config
+			api.nvim_buf_call(bufnr, function()
 				vim.cmd.terminal()
 				vim.bo[bufnr].buflisted = M.config.buflisted
 				if opts.cmd then
-					vim.api.nvim_chan_send(vim.bo[bufnr].channel, H.cmd_to_str(opts.cmd))
+					api.nvim_chan_send(vim.bo[bufnr].channel, H.cmd_to_str(opts.cmd))
 				end
 				if opts.buf_call then
 					opts.buf_call(bufnr)
 				end
 			end)
-			local winid = vim.api.nvim_open_win(bufnr, true, win_config)
-			H.termdata.opening[bufnr] = winid
+			local winid = api.nvim_open_win(bufnr, true, win_config)
+			H.windata.opening[bufnr] = winid
 		end
 	end)
 
@@ -256,12 +267,12 @@ end
 ---@generic T
 ---@param ui_select fun(items: T[], opts: vim.ui.select.Opts, on_choice: fun(item: T|nil, idx: integer|nil))? Use this to replace the `vim.ui.select` function if you want to use a different function.
 function M.select(ui_select)
-	local bufs = vim.api.nvim_list_bufs()
+	local bufs = api.nvim_list_bufs()
 	local term_bufs = {}
 	for _, buf in ipairs(bufs) do
 		if H.is_term(buf) then
 			table.insert(term_bufs, {
-				name = vim.fs.basename(vim.api.nvim_buf_get_name(buf)),
+				name = vim.fs.basename(api.nvim_buf_get_name(buf)),
 				bufnr = buf,
 			})
 		end
