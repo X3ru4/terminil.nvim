@@ -5,6 +5,7 @@
 ---@field term_opts terminil.open.opts?
 ---@field on_open fun(buf: number, chan: number)?
 ---@field buflisted boolean?
+---@field auto_startinsert boolean?
 
 ---@class terminil.open.opts
 ---@field cmd string|string[]?
@@ -32,6 +33,19 @@ M.config = {
 	use_default_keys = true,
 	keys = {
 		['<C-t>h'] = { '<cmd>hide<cr>', desc = 'Hide the window' },
+		['<C-t>t'] = { '<cmd>stopinsert<cr>', desc = 'Stop insert in terminal mode' },
+		['<C-t>j'] = {
+			function()
+				M.focus(1)
+			end,
+			desc = 'Next terminal window',
+		},
+		['<C-t>k'] = {
+			function()
+				M.focus(-1)
+			end,
+			desc = 'Previous terminal window',
+		},
 		['<C-t>d'] = {
 			function()
 				local buf = api.nvim_win_get_buf(0)
@@ -42,7 +56,6 @@ M.config = {
 			end,
 			desc = 'Delete the terminal',
 		},
-		['<C-t>t'] = { '<cmd>stopinsert<cr>', desc = 'Stop insert in terminal mode' },
 		['<C-t>n'] = {
 			function()
 				vim.ui.input({ prompt = 'New name: ' }, function(input)
@@ -53,6 +66,13 @@ M.config = {
 				end)
 			end,
 			desc = 'Remame the terminal',
+		},
+		['<leader>tm'] = {
+			function()
+				M.open_multiple()
+			end,
+			mode = 'n',
+			desc = 'Open multiple terminal',
 		},
 		['<leader>tt'] = {
 			function()
@@ -99,6 +119,30 @@ M.config = {
 			mode = 'n',
 			desc = 'Select terminal',
 		},
+		['<leader>tj'] = {
+			function()
+				M.focus(1)
+			end,
+			mode = 'n',
+			desc = 'Next terminal window',
+		},
+		['<leader>tk'] = {
+			function()
+				M.focus(-1)
+			end,
+			mode = 'n',
+			desc = 'Previous terminal window',
+		},
+		['<leader>td'] = {
+			function()
+				local buf = api.nvim_win_get_buf(0)
+				if H.windata[buf] then
+					api.nvim_win_close(0, false)
+				end
+				api.nvim_buf_delete(buf, { force = true })
+			end,
+			desc = 'Delete the terminal',
+		},
 	},
 	win_config = {
 		split = 'below',
@@ -106,6 +150,7 @@ M.config = {
 	term_opts = {},
 	on_open = function(buf, chan) end,
 	buflisted = false,
+	auto_startinsert = true,
 }
 
 function H.setup_keys(keys)
@@ -137,6 +182,15 @@ function H.is_term(buf)
 	return vim.bo[buf] and vim.bo[buf].buftype == 'terminal' and not exclude_ft[vim.bo[buf].filetype]
 end
 
+---@param split 'horizontal'|'vertical'
+function H.default_split(split)
+	local splits = {
+		horizontal = vim.o.splitbelow and 'below' or 'above',
+		vertical = vim.o.splitright and 'right' or 'left',
+	}
+	return splits[split]
+end
+
 ---@param axis 'height'|'width'
 ---@param percent number 0.0->1.0
 ---@return number
@@ -160,6 +214,24 @@ function H.open_buf(buf)
 	end
 end
 
+function H.list_termwins()
+	return vim.tbl_filter(function(win)
+		if H.is_term(api.nvim_win_get_buf(win)) then
+			return true
+		end
+		return false
+	end, api.nvim_list_wins())
+end
+
+function H.list_termbufs()
+	return vim.tbl_filter(function(buf)
+		if H.is_term(buf) then
+			return true
+		end
+		return false
+	end, api.nvim_list_bufs())
+end
+
 function H.setup_autocmd()
 	local autocmd = api.nvim_create_autocmd
 	local group = api.nvim_create_augroup('terminil.nvim', { clear = true })
@@ -167,7 +239,9 @@ function H.setup_autocmd()
 	autocmd('TermOpen', {
 		group = group,
 		callback = function(ev)
-			vim.cmd.startinsert()
+			if M.config.auto_startinsert then
+				vim.cmd.startinsert()
+			end
 			M.config.on_open(ev.buf, vim.bo[ev.buf].channel)
 			if H.windata[ev.buf] then
 				return
@@ -267,17 +341,14 @@ end
 ---@generic T
 ---@param ui_select fun(items: T[], opts: vim.ui.select.Opts, on_choice: fun(item: T|nil, idx: integer|nil))? Use this to replace the `vim.ui.select` function if you want to use a different function.
 function M.select(ui_select)
-	local bufs = api.nvim_list_bufs()
-	local term_bufs = {}
-	for _, buf in ipairs(bufs) do
-		if H.is_term(buf) then
-			table.insert(term_bufs, {
-				name = vim.fs.basename(api.nvim_buf_get_name(buf)),
-				bufnr = buf,
-			})
-		end
+	local termbufs = {}
+	for _, buf in ipairs(H.list_termbufs()) do
+		table.insert(termbufs, {
+			name = vim.fs.basename(api.nvim_buf_get_name(buf)),
+			bufnr = buf,
+		})
 	end
-	if #term_bufs == 0 then
+	if #termbufs == 0 then
 		vim.notify('No terminal exists.')
 		return
 	end
@@ -287,12 +358,54 @@ function M.select(ui_select)
 			return item.name
 		end,
 	}
-	(ui_select or vim.ui.select)(term_bufs, opts, function(item, _)
+	(ui_select or vim.ui.select)(termbufs, opts, function(item, _)
 		if not item then
 			return
 		end
 		H.open_buf(item.bufnr)
 	end)
+end
+
+---Open multiple terminal windows at the same time.
+---@param count number? >1
+---@param horizontal 'above'|'below'?
+---@param vertical 'left'|'right'?
+function M.open_multiple(count, horizontal, vertical)
+	count = count or vim.v.count1
+	local i_cycle = 1
+	local cycles = {
+		horizontal or H.default_split('horizontal'),
+		vertical or H.default_split('vertical'),
+	}
+
+	local termwins = H.list_termwins()
+
+	if termwins[#termwins] then
+		local split = api.nvim_win_get_config(termwins[#termwins]).split
+		if split == 'above' or split == 'below' then
+			i_cycle = 2
+			count = count + 1
+		end
+	end
+
+	for i = i_cycle, count do
+		i_cycle = ((i - 1) % 2) + 1
+		M.open({ split = cycles[i_cycle] })
+	end
+end
+
+---Focus on the terminal windows in order
+---@param direction -1|1
+function M.focus(direction)
+	local termwins = H.list_termwins()
+	local current_win = api.nvim_get_current_win()
+	for i, win in ipairs(termwins) do
+		if win == current_win then
+			local count = math.abs(i + direction * vim.v.count1)
+			count = ((count - 1) % #termwins) + 1
+			api.nvim_set_current_win(termwins[count])
+		end
+	end
 end
 
 ---@param opts terminil.opts?
