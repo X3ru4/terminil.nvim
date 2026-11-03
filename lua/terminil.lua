@@ -56,6 +56,12 @@ M.config = {
 			end,
 			desc = 'Delete the terminal',
 		},
+		['<C-t>m'] = {
+			function()
+				M.open_multiple()
+			end,
+			desc = 'Open multiple terminal',
+		},
 		['<C-t>n'] = {
 			function()
 				vim.ui.input({ prompt = 'New name: ' }, function(input)
@@ -141,6 +147,7 @@ M.config = {
 				end
 				api.nvim_buf_delete(buf, { force = true })
 			end,
+			mode = 'n',
 			desc = 'Delete the terminal',
 		},
 	},
