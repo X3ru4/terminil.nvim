@@ -32,8 +32,22 @@ local api = vim.api
 M.config = {
 	use_default_keys = true,
 	keys = {
-		['<C-t>h'] = { '<cmd>hide<cr>', desc = 'Hide the window' },
 		['<C-t>t'] = { '<cmd>stopinsert<cr>', desc = 'Stop insert in terminal mode' },
+		['<C-t>h'] = {
+			function()
+				local buf = api.nvim_get_current_buf()
+				if not H.is_term(buf) then
+					return
+				end
+				vim.bo.buflisted = false
+				if H.windata[buf] then
+					vim.cmd('hide')
+				else
+					vim.cmd('bnext')
+				end
+			end,
+			desc = 'Hide the terminal',
+		},
 		['<C-t>j'] = {
 			function()
 				M.focus(1)
@@ -48,7 +62,7 @@ M.config = {
 		},
 		['<C-t>d'] = {
 			function()
-				local buf = api.nvim_win_get_buf(0)
+				local buf = api.nvim_get_current_buf()
 				if H.windata[buf] then
 					api.nvim_win_close(0, false)
 				end
@@ -141,7 +155,7 @@ M.config = {
 		},
 		['<leader>td'] = {
 			function()
-				local buf = api.nvim_win_get_buf(0)
+				local buf = api.nvim_get_current_buf()
 				if not H.is_term(buf) then
 					return
 				end
@@ -153,11 +167,27 @@ M.config = {
 			mode = 'n',
 			desc = 'Delete the terminal',
 		},
+		['<leader>ti'] = {
+			function()
+				local buf = api.nvim_get_current_buf()
+				if not H.is_term(buf) then
+					return
+				end
+				vim.bo.buflisted = false
+				if H.windata[buf] then
+					vim.cmd('hide')
+				else
+					vim.cmd('bnext')
+				end
+			end,
+			desc = 'Hide the terminal',
+		},
 	},
 	win_config = {
 		split = 'below',
 	},
 	term_opts = {},
+	---@diagnostic disable-next-line: unused-local
 	on_open = function(buf, chan) end,
 	buflisted = false,
 	auto_startinsert = true,
@@ -209,6 +239,8 @@ function H.size(axis, percent)
 	return math.ceil(total * percent)
 end
 
+---Open terminal buffer more intelligently
+---@param buf number
 function H.open_buf(buf)
 	if H.is_term(buf) then
 		if H.windata[buf] then
@@ -355,10 +387,11 @@ end
 ---@param ui_select fun(items: T[], opts: vim.ui.select.Opts, on_choice: fun(item: T|nil, idx: integer|nil))? Use this to replace the `vim.ui.select` function if you want to use a different function.
 function M.select(ui_select)
 	local termbufs = {}
-	for _, buf in ipairs(H.list_termbufs()) do
+	for idx, buf in ipairs(H.list_termbufs()) do
 		table.insert(termbufs, {
-			name = vim.fs.basename(api.nvim_buf_get_name(buf)),
 			bufnr = buf,
+			index = idx,
+			name = vim.fs.basename(api.nvim_buf_get_name(buf)),
 		})
 	end
 	if #termbufs == 0 then
@@ -368,7 +401,7 @@ function M.select(ui_select)
 	local opts = {
 		prompt = 'Select terminal: ',
 		format_item = function(item)
-			return item.name
+			return item.index .. ' ' .. item.name
 		end,
 	}
 	(ui_select or vim.ui.select)(termbufs, opts, function(item, _)
@@ -381,7 +414,7 @@ end
 
 ---Open multiple terminal windows at the same time.
 ---@param count number|false? >1
----@param cycles string[]?
+---@param cycles string[]|vim.api.keyset.win_config[]?
 ---@param opts terminil.open.opts?
 function M.open_multiple(count, cycles, opts)
 	count = count or vim.v.count1
@@ -405,30 +438,95 @@ function M.open_multiple(count, cycles, opts)
 
 	for i = i_cycle, count do
 		i_cycle = ((i - 1) % #cycles) + 1
-		M.open({ split = cycles[i_cycle] }, opts)
+		local val = cycles[i_cycle]
+		---@diagnostic disable-next-line: param-type-mismatch
+		M.open(type(val) == 'string' and { split = val } or val, opts)
 	end
 end
 
 ---Focus on the terminal windows in order
 ---@param direction -1|1
-function M.focus(direction)
+---@param count number?
+function M.focus(direction, count)
+	count = count or vim.v.count1
 	local termwins = H.list_termwins()
 	local current_win = api.nvim_get_current_win()
 	for i, win in ipairs(termwins) do
 		if win == current_win then
 			local next_win = 0
 			if direction < 0 then
-				local count = i - vim.v.count1
-				if count <= 0 then
-					next_win = termwins[#termwins + (count % -#termwins)]
+				local idx = i - count
+				if idx <= 0 then
+					next_win = termwins[#termwins + (idx % -#termwins)]
 				else
-					next_win = termwins[count]
+					next_win = termwins[idx]
 				end
 			else
-				next_win = termwins[(((i + vim.v.count1) - 1) % #termwins) + 1]
+				next_win = termwins[(((i + count) - 1) % #termwins) + 1]
 			end
 			api.nvim_set_current_win(next_win)
 		end
+	end
+end
+
+---Switch to a different terminal in the current window in order
+---@param direction -1|1
+---@param count number?
+function M.switch(direction, count)
+	count = count or vim.v.count1
+	local termbufs = H.list_termbufs()
+	local current_buf = api.nvim_get_current_buf()
+	for i, buf in ipairs(termbufs) do
+		if buf == current_buf then
+			local next_buf = 0
+			if direction < 0 then
+				local idx = i - count
+				if idx <= 0 then
+					next_buf = termbufs[#termbufs + (idx % -#termbufs)]
+				else
+					next_buf = termbufs[idx]
+				end
+			else
+				next_buf = termbufs[(((i + count) - 1) % #termbufs) + 1]
+			end
+			H.windata[next_buf] = H.windata[current_buf]
+			if H.windata.opening[next_buf] then
+				api.nvim_win_close(H.windata.opening[next_buf], true)
+			end
+			H.windata.opening[next_buf] = H.windata.opening[current_buf]
+			H.windata.opening[current_buf] = nil
+			api.nvim_win_set_buf(0, next_buf)
+		end
+	end
+end
+
+---Similar to the `M.switch` function, but with the index you want
+---@param idx number > 0
+function M.switch_in_order(idx)
+	local count = idx or vim.v.count
+	if count < 1 then
+		return
+	end
+	local buf = H.list_termbufs()[count]
+	if buf then
+		if H.windata.opening[buf] then
+			api.nvim_win_close(H.windata.opening[buf], true)
+		end
+		api.nvim_win_set_buf(0, buf)
+		H.windata.opening[buf] = api.nvim_get_current_win()
+	end
+end
+
+---Similar to the `H.open_buf` function, but with the index you want
+---@param idx number > 0
+function M.open_in_order(idx)
+	local count = idx or vim.v.count
+	if count < 1 then
+		return
+	end
+	local buf = H.list_termbufs()[count]
+	if buf then
+		H.open_buf(buf)
 	end
 end
 
