@@ -244,8 +244,9 @@ end
 function H.open_buf(buf)
 	if H.is_term(buf) then
 		if H.windata[buf] then
+			vim.print(H.list_termbufs(), buf, H.list_termwins(), H.windata.opening[buf])
 			local winid = H.windata.opening[buf]
-			if winid then
+			if winid and vim.tbl_contains(H.list_termwins(), winid) then
 				api.nvim_set_current_win(winid)
 			else
 				api.nvim_open_win(buf, true, H.windata[buf])
