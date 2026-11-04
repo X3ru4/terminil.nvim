@@ -244,7 +244,6 @@ end
 function H.open_buf(buf)
 	if H.is_term(buf) then
 		if H.windata[buf] then
-			vim.print(H.list_termbufs(), buf, H.list_termwins(), H.windata.opening[buf])
 			local winid = H.windata.opening[buf]
 			if winid and vim.tbl_contains(H.list_termwins(), winid) then
 				api.nvim_set_current_win(winid)
@@ -273,6 +272,14 @@ function H.list_termbufs()
 		end
 		return false
 	end, api.nvim_list_bufs())
+end
+
+function H.buf_get_win(buf)
+	for _, win in ipairs(H.list_termwins()) do
+		if buf == api.nvim_win_get_buf(win) then
+			return win
+		end
+	end
 end
 
 function H.setup_autocmd()
