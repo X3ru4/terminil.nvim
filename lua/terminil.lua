@@ -167,7 +167,7 @@ M.config = {
 			mode = 'n',
 			desc = 'Delete the terminal',
 		},
-		['<leader>ti'] = {
+		['<leader>tc'] = {
 			function()
 				local buf = api.nvim_get_current_buf()
 				if not H.is_term(buf) then
@@ -180,6 +180,7 @@ M.config = {
 					vim.cmd('bnext')
 				end
 			end,
+			mode = 'n',
 			desc = 'Hide the terminal',
 		},
 	},
