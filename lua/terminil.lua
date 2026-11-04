@@ -276,10 +276,10 @@ end
 
 function H.setup_autocmd()
 	local autocmd = api.nvim_create_autocmd
-	local group = api.nvim_create_augroup('terminil.nvim', { clear = true })
+	local augroup = api.nvim_create_augroup('terminil.nvim', { clear = true })
 
 	autocmd('TermOpen', {
-		group = group,
+		group = augroup,
 		callback = function(ev)
 			if M.config.auto_startinsert then
 				vim.cmd.startinsert()
@@ -299,14 +299,22 @@ function H.setup_autocmd()
 		end,
 	})
 	autocmd('TermClose', {
-		group = group,
+		group = augroup,
 		callback = function(ev)
 			H.windata[ev.buf] = nil
 			H.windata.opening[ev.buf] = nil
 		end,
 	})
 	autocmd('WinEnter', {
-		group = group,
+		group = augroup,
+		callback = function(ev)
+			if H.is_term(ev.buf) then
+				H.windata.opening[ev.buf] = api.nvim_get_current_win()
+			end
+		end,
+	})
+	autocmd('WinNew', {
+		group = augroup,
 		callback = function(ev)
 			if H.is_term(ev.buf) then
 				H.windata.opening[ev.buf] = api.nvim_get_current_win()
@@ -314,7 +322,7 @@ function H.setup_autocmd()
 		end,
 	})
 	autocmd('WinClosed', {
-		group = group,
+		group = augroup,
 		callback = function(ev)
 			if H.windata.opening[ev.buf] then
 				H.windata.opening[ev.buf] = nil
