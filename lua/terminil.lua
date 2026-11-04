@@ -142,6 +142,9 @@ M.config = {
 		['<leader>td'] = {
 			function()
 				local buf = api.nvim_win_get_buf(0)
+				if not H.is_term(buf) then
+					return
+				end
 				if H.windata[buf] then
 					api.nvim_win_close(0, false)
 				end
@@ -321,6 +324,9 @@ function M.open(win_config, opts)
 			if opts.cmd then
 				api.nvim_chan_send(vim.bo[bufnr].channel, H.cmd_to_str(opts.cmd))
 			end
+			if opts.buf_call then
+				opts.buf_call(bufnr)
+			end
 		else
 			local bufnr = api.nvim_create_buf(false, true)
 			H.windata[bufnr] = win_config
@@ -410,9 +416,18 @@ function M.focus(direction)
 	local current_win = api.nvim_get_current_win()
 	for i, win in ipairs(termwins) do
 		if win == current_win then
-			local count = math.abs(i + direction * vim.v.count1)
-			count = ((count - 1) % #termwins) + 1
-			api.nvim_set_current_win(termwins[count])
+			local next_win = 0
+			if direction < 0 then
+				local count = i - vim.v.count1
+				if count <= 0 then
+					next_win = termwins[#termwins + (count % -#termwins)]
+				else
+					next_win = termwins[count]
+				end
+			else
+				next_win = termwins[(((i + vim.v.count1) - 1) % #termwins) + 1]
+			end
+			api.nvim_set_current_win(next_win)
 		end
 	end
 end
