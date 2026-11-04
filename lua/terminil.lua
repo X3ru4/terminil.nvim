@@ -23,7 +23,7 @@ local M = {}
 local H = {}
 M.helper = H
 
-H.windata = { opening = {} }
+H.windata = {}
 
 local api = vim.api
 
@@ -244,7 +244,7 @@ end
 function H.open_buf(buf)
 	if H.is_term(buf) then
 		if H.windata[buf] then
-			local winid = H.windata.opening[buf]
+			local winid = H.buf_get_win(buf)
 			if winid and vim.tbl_contains(H.list_termwins(), winid) then
 				api.nvim_set_current_win(winid)
 			else
@@ -310,23 +310,6 @@ function H.setup_autocmd()
 		group = augroup,
 		callback = function(ev)
 			H.windata[ev.buf] = nil
-			H.windata.opening[ev.buf] = nil
-		end,
-	})
-	autocmd('WinEnter', {
-		group = augroup,
-		callback = function(ev)
-			if H.is_term(ev.buf) then
-				H.windata.opening[ev.buf] = api.nvim_get_current_win()
-			end
-		end,
-	})
-	autocmd('WinClosed', {
-		group = augroup,
-		callback = function(ev)
-			if H.windata.opening[ev.buf] then
-				H.windata.opening[ev.buf] = nil
-			end
 		end,
 	})
 end
@@ -381,7 +364,6 @@ function M.open(win_config, opts)
 				end
 			end)
 			local winid = api.nvim_open_win(bufnr, true, win_config)
-			H.windata.opening[bufnr] = winid
 		end
 	end)
 
@@ -498,11 +480,10 @@ function M.switch(direction, count)
 				next_buf = termbufs[(((i + count) - 1) % #termbufs) + 1]
 			end
 			H.windata[next_buf] = H.windata[current_buf]
-			if H.windata.opening[next_buf] then
-				api.nvim_win_close(H.windata.opening[next_buf], true)
+			local opening_win = H.buf_get_win(next_buf)
+			if opening_win then
+				api.nvim_win_close(opening_win, true)
 			end
-			H.windata.opening[next_buf] = H.windata.opening[current_buf]
-			H.windata.opening[current_buf] = nil
 			api.nvim_win_set_buf(0, next_buf)
 		end
 	end
@@ -517,11 +498,11 @@ function M.switch_in_order(idx)
 	end
 	local buf = H.list_termbufs()[count]
 	if buf then
-		if H.windata.opening[buf] then
-			api.nvim_win_close(H.windata.opening[buf], true)
+		local opening_win = H.buf_get_win(buf)
+		if opening_win then
+			api.nvim_win_close(opening_win, true)
 		end
 		api.nvim_win_set_buf(0, buf)
-		H.windata.opening[buf] = api.nvim_get_current_win()
 	end
 end
 
