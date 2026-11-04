@@ -99,9 +99,29 @@ terminil.open_multiple(3)
 Split in your own style
 
 ```lua
-terminil.open_multiple(5, { 'above', 'left', 'right' })
+terminil.open_multiple(5, { 'above', { split = 'left', width = 10 }, 'right' })
+```
+
+### Switch between terminals and move to different windows
+
+Most functions use the count prefix
+
+```lua
+-- Switch to a different terminal in the current window
+terminil.switch(-1) -- switch to the previous terminal
+terminil.switch(1) -- switch to the next terminal
+
+terminil.focus(-1) -- Jump to the previous terminal window
+terminil.focus(1) -- Jump to the next terminal window
+```
+
+Use indexes for control
+
+```lua
+terminil.switch_in_order(idx?)
+terminil.open_in_order(idx?)
 ```
 
 ## Configuration
 
-[Default configuration](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L32-L161)
+[Default configuration](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L32-L194)
