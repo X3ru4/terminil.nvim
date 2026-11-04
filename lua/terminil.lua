@@ -245,7 +245,7 @@ function H.open_buf(buf)
 	if H.is_term(buf) then
 		if H.windata[buf] then
 			local winid = H.windata.opening[buf]
-			if winid and vim.tbl_contains(api.nvim_tabpage_list_wins(0), winid) then
+			if winid then
 				api.nvim_set_current_win(winid)
 			else
 				api.nvim_open_win(buf, true, H.windata[buf])
@@ -306,14 +306,6 @@ function H.setup_autocmd()
 		end,
 	})
 	autocmd('WinEnter', {
-		group = augroup,
-		callback = function(ev)
-			if H.is_term(ev.buf) then
-				H.windata.opening[ev.buf] = api.nvim_get_current_win()
-			end
-		end,
-	})
-	autocmd('WinNew', {
 		group = augroup,
 		callback = function(ev)
 			if H.is_term(ev.buf) then
