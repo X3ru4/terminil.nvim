@@ -1,6 +1,6 @@
 # terminil.nvim
 
-*A simple plugin that makes interacting with the terminal easier.*
+_A simple plugin that makes interacting with the terminal easier._
 
 ## Features
 
@@ -130,6 +130,10 @@ Use indexes for control
 ```lua
 terminil.switch_in_order(idx?)
 terminil.open_in_order(idx?)
+
+-- For example: If you hide a window or terminal and it has the number 1
+-- then you press the key combination `1<leader>tw` and it will open the terminal.
+vim.keymap.set('n', '<leader>tw', terminil.open_in_order)
 ```
 
 ## Configuration
