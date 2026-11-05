@@ -49,13 +49,13 @@ M.config = {
 		},
 		['<C-t>j'] = {
 			function()
-				M.focus(1)
+				M.focus(-1)
 			end,
 			desc = 'Next terminal window',
 		},
 		['<C-t>k'] = {
 			function()
-				M.focus(-1)
+				M.focus(1)
 			end,
 			desc = 'Previous terminal window',
 		},
@@ -140,14 +140,14 @@ M.config = {
 		},
 		['<leader>tj'] = {
 			function()
-				M.focus(1)
+				M.focus(-1)
 			end,
 			mode = 'n',
 			desc = 'Next terminal window',
 		},
 		['<leader>tk'] = {
 			function()
-				M.focus(-1)
+				M.focus(1)
 			end,
 			mode = 'n',
 			desc = 'Previous terminal window',
@@ -437,23 +437,27 @@ end
 function M.focus(direction, count)
 	count = count or vim.v.count1
 	local termwins = H.list_termwins()
-	local current_win = api.nvim_get_current_win()
-	for i, win in ipairs(termwins) do
+	local current_win, current_idx = api.nvim_get_current_win(), 0
+
+	for idx, win in ipairs(termwins) do
 		if win == current_win then
-			local next_win = 0
-			if direction < 0 then
-				local idx = i - count
-				if idx <= 0 then
-					next_win = termwins[#termwins + (idx % -#termwins)]
-				else
-					next_win = termwins[idx]
-				end
-			else
-				next_win = termwins[(((i + count) - 1) % #termwins) + 1]
-			end
-			api.nvim_set_current_win(next_win)
+			current_idx = idx
 		end
 	end
+
+	local next_win = 0
+	local idx = current_idx + count * direction
+	if direction < 0 then
+		idx = current_idx == 0 and 1 - count or idx
+		if idx <= 0 then
+			next_win = termwins[#termwins + (idx % -#termwins)]
+		else
+			next_win = termwins[idx]
+		end
+	else
+		next_win = termwins[((idx - 1) % #termwins) + 1]
+	end
+	api.nvim_set_current_win(next_win)
 end
 
 ---Switch to a different terminal in the current window in order
