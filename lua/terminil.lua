@@ -4,7 +4,6 @@
 ---@field win_config vim.api.keyset.win_config? Default configuration for terminal windows when using the `M.open()` function.
 ---@field term_opts terminil.open.opts?
 ---@field on_open fun(buf: number, chan: number)?
----@field buflisted boolean?
 ---@field auto_startinsert boolean?
 
 ---@class terminil.open.opts
@@ -41,7 +40,7 @@ M.config = {
 				end
 				vim.bo.buflisted = false
 				if H.windata[buf] then
-					vim.cmd('hide')
+					vim.cmd.wincmd('c')
 				else
 					vim.cmd('bnext')
 				end
@@ -175,7 +174,7 @@ M.config = {
 				end
 				vim.bo.buflisted = false
 				if H.windata[buf] then
-					vim.cmd('hide')
+					vim.cmd.wincmd('c')
 				else
 					vim.cmd('bnext')
 				end
@@ -190,7 +189,6 @@ M.config = {
 	term_opts = {},
 	---@diagnostic disable-next-line: unused-local
 	on_open = function(buf, chan) end,
-	buflisted = false,
 	auto_startinsert = true,
 }
 
@@ -245,9 +243,13 @@ end
 function H.open_buf(buf)
 	if H.is_term(buf) then
 		if H.windata[buf] then
-			local winid = H.buf_get_win(buf)
-			if winid and vim.tbl_contains(H.list_termwins(), winid) then
-				api.nvim_set_current_win(winid)
+			local wins = H.buf_get_win(buf)
+			if #wins > 0 then
+				if #wins == 1 and api.nvim_win_is_valid(wins[1]) then
+					api.nvim_set_current_win(wins[1])
+				else
+					vim.notify('This buffer: ' .. buf .. ' is running across multiple windows.', vim.log.levels.WARN)
+				end
 			else
 				api.nvim_open_win(buf, true, H.windata[buf])
 			end
@@ -259,28 +261,22 @@ end
 
 function H.list_termwins()
 	return vim.tbl_filter(function(win)
-		if H.is_term(api.nvim_win_get_buf(win)) then
-			return true
-		end
-		return false
+		return H.is_term(api.nvim_win_get_buf(win))
 	end, api.nvim_list_wins())
 end
 
 function H.list_termbufs()
 	return vim.tbl_filter(function(buf)
-		if H.is_term(buf) then
-			return true
-		end
-		return false
+		return H.is_term(buf)
 	end, api.nvim_list_bufs())
 end
 
 function H.buf_get_win(buf)
-	for _, win in ipairs(H.list_termwins()) do
-		if buf == api.nvim_win_get_buf(win) then
-			return win
-		end
-	end
+	return vim.fn.win_findbuf(buf)
+end
+
+function H.is_termwin(win)
+	return vim.tbl_contains(H.list_termwins(), win)
 end
 
 function H.setup_autocmd()
@@ -344,7 +340,7 @@ function M.open(win_config, opts)
 		if not win_config then
 			vim.cmd.terminal()
 			local bufnr = api.nvim_get_current_buf()
-			vim.bo[bufnr].buflisted = M.config.buflisted
+			vim.bo[bufnr].buflisted = true
 			if opts.cmd then
 				api.nvim_chan_send(vim.bo[bufnr].channel, H.cmd_to_str(opts.cmd))
 			end
@@ -356,7 +352,7 @@ function M.open(win_config, opts)
 			H.windata[bufnr] = win_config
 			api.nvim_buf_call(bufnr, function()
 				vim.cmd.terminal()
-				vim.bo[bufnr].buflisted = M.config.buflisted
+				vim.bo[bufnr].buflisted = true
 				if opts.cmd then
 					api.nvim_chan_send(vim.bo[bufnr].channel, H.cmd_to_str(opts.cmd))
 				end
@@ -364,7 +360,7 @@ function M.open(win_config, opts)
 					opts.buf_call(bufnr)
 				end
 			end)
-			local winid = api.nvim_open_win(bufnr, true, win_config)
+			api.nvim_open_win(bufnr, true, win_config)
 		end
 	end)
 
@@ -481,9 +477,9 @@ function M.switch(direction, count)
 				next_buf = termbufs[(((i + count) - 1) % #termbufs) + 1]
 			end
 			H.windata[next_buf] = H.windata[current_buf]
-			local opening_win = H.buf_get_win(next_buf)
-			if opening_win then
-				api.nvim_win_close(opening_win, true)
+			local opening_wins = H.buf_get_win(next_buf)
+			if #opening_wins == 1 then
+				api.nvim_win_close(opening_wins[1], true)
 			end
 			api.nvim_win_set_buf(0, next_buf)
 		end
@@ -499,9 +495,9 @@ function M.switch_in_order(idx)
 	end
 	local buf = H.list_termbufs()[count]
 	if buf then
-		local opening_win = H.buf_get_win(buf)
-		if opening_win then
-			api.nvim_win_close(opening_win, true)
+		local opening_wins = H.buf_get_win(buf)
+		if #opening_wins == 1 then
+			api.nvim_win_close(opening_wins[1], true)
 		end
 		api.nvim_win_set_buf(0, buf)
 	end
