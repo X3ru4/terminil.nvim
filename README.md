@@ -1,22 +1,17 @@
 # terminil.nvim
 
-A simple plugin that makes interacting with the terminal easier.
+*A simple plugin that makes interacting with the terminal easier.*
 
 ## Features
 
-- Open the terminal and configure your own window.
-- Floating terminal window.
-- Reopening a hidden terminal window retains the window's state using the `M.select()` function.
-- Provides several useful helper functions.
+- **Open the terminal and configure your own window**
+- **Reopen the hidden terminal window while retaining the window configuration**
+- **Many default keymaps make interacting with the terminal simpler**
+- **Provides several useful helper functions**
+- **Floating terminal window**
+- **Highly customizable**
 
 ## Installation
-
-With vim.pack
-
-```lua
-vim.pack.add({ 'https://github.com/X3ru4/terminil.nvim' })
-require('terminil').setup()
-```
 
 Using [lazy.nvim](https://github.com/folke/lazy.nvim)
 
@@ -24,10 +19,25 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim)
 return {
     'X3ru4/terminil.nvim',
     event = 'VeryLazy',
+    init = function()
+        -- Change the prefix of the default keymaps.
+        vim.g.tnil_keyprefix_n = 'gt'    -- Default: '<leader>t'
+        vim.g.tnil_keyprefix_t = '<C-t>' -- Default: '<C-t>'
+    end,
     ---@module 'terminil'
     ---@type terminil.opts
     opts = {},
 }
+```
+
+With vim.pack
+
+```lua
+vim.pack.add({ 'https://github.com/X3ru4/terminil.nvim' })
+-- Change the prefix of the default keymaps.
+vim.g.tnil_keyprefix_n = 'gt'    -- Default: '<leader>t'
+vim.g.tnil_keyprefix_t = '<C-t>' -- Default: '<C-t>'
+require('terminil').setup()
 ```
 
 ## Cooking recipes
@@ -124,4 +134,4 @@ terminil.open_in_order(idx?)
 
 ## Configuration
 
-[Default configuration](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L32-L194)
+[Default configuration](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L35-L197)
