@@ -40,7 +40,7 @@ M.config = {
 				end
 				vim.bo.buflisted = false
 				if H.windata[buf] then
-					vim.cmd.wincmd('c')
+					api.nvim_win_close(0, true)
 				else
 					vim.cmd('bnext')
 				end
@@ -63,7 +63,7 @@ M.config = {
 			function()
 				local buf = api.nvim_get_current_buf()
 				if H.windata[buf] then
-					api.nvim_win_close(0, false)
+					api.nvim_win_close(0, true)
 				end
 				api.nvim_buf_delete(buf, { force = true })
 			end,
@@ -159,7 +159,7 @@ M.config = {
 					return
 				end
 				if H.windata[buf] then
-					api.nvim_win_close(0, false)
+					api.nvim_win_close(0, true)
 				end
 				api.nvim_buf_delete(buf, { force = true })
 			end,
@@ -174,7 +174,7 @@ M.config = {
 				end
 				vim.bo.buflisted = false
 				if H.windata[buf] then
-					vim.cmd.wincmd('c')
+					api.nvim_win_close(0, true)
 				else
 					vim.cmd('bnext')
 				end
