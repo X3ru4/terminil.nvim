@@ -25,14 +25,18 @@ M.helper = H
 H.windata = {}
 
 local api = vim.api
+local keyprefix = {
+	t = vim.g.tnil_keyprefix_t or '<C-t>',
+	n = vim.g.tnil_keyprefix_n or '<leader>t',
+}
 
 ---Default configuration
 ---@type terminil.opts
 M.config = {
 	use_default_keys = true,
 	keys = {
-		['<C-t>t'] = { '<cmd>stopinsert<cr>', desc = 'Stop insert in terminal mode' },
-		['<C-t>h'] = {
+		[keyprefix.t .. 't'] = { '<cmd>stopinsert<cr>', desc = 'Stop insert in terminal mode' },
+		[keyprefix.t .. 'h'] = {
 			function()
 				local buf = api.nvim_get_current_buf()
 				if not H.is_term(buf) then
@@ -47,19 +51,19 @@ M.config = {
 			end,
 			desc = 'Hide the terminal',
 		},
-		['<C-t>j'] = {
+		[keyprefix.t .. 'j'] = {
 			function()
 				M.focus(-1)
 			end,
 			desc = 'Next terminal window',
 		},
-		['<C-t>k'] = {
+		[keyprefix.t .. 'k'] = {
 			function()
 				M.focus(1)
 			end,
 			desc = 'Previous terminal window',
 		},
-		['<C-t>d'] = {
+		[keyprefix.t .. 'd'] = {
 			function()
 				local buf = api.nvim_get_current_buf()
 				if H.windata[buf] then
@@ -69,13 +73,13 @@ M.config = {
 			end,
 			desc = 'Delete the terminal',
 		},
-		['<C-t>m'] = {
+		[keyprefix.t .. 'm'] = {
 			function()
 				M.open_multiple()
 			end,
 			desc = 'Open multiple terminal',
 		},
-		['<C-t>n'] = {
+		[keyprefix.t .. 'n'] = {
 			function()
 				vim.ui.input({ prompt = 'New name: ' }, function(input)
 					if not input then
@@ -86,35 +90,35 @@ M.config = {
 			end,
 			desc = 'Remame the terminal',
 		},
-		['<leader>tm'] = {
+		[keyprefix.n .. 'm'] = {
 			function()
 				M.open_multiple()
 			end,
 			mode = 'n',
 			desc = 'Open multiple terminal',
 		},
-		['<leader>tt'] = {
+		[keyprefix.n .. 't'] = {
 			function()
 				M.open()
 			end,
 			mode = 'n',
 			desc = 'Open new terminal',
 		},
-		['<leader>th'] = {
+		[keyprefix.n .. 'h'] = {
 			function()
 				M.open({ split = vim.o.splitbelow and 'below' or 'above' })
 			end,
 			mode = 'n',
 			desc = 'Open new split terminal',
 		},
-		['<leader>tv'] = {
+		[keyprefix.n .. 'v'] = {
 			function()
 				M.open({ split = vim.o.splitright and 'right' or 'left' })
 			end,
 			mode = 'n',
 			desc = 'Open new vsplit terminal',
 		},
-		['<leader>tf'] = {
+		[keyprefix.n .. 'f'] = {
 			function()
 				local width = H.size('width', 0.7)
 				local height = H.size('height', 0.6)
@@ -131,28 +135,28 @@ M.config = {
 			mode = 'n',
 			desc = 'Open new float terminal',
 		},
-		['<leader>ts'] = {
+		[keyprefix.n .. 's'] = {
 			function()
 				M.select()
 			end,
 			mode = 'n',
 			desc = 'Select terminal',
 		},
-		['<leader>tj'] = {
+		[keyprefix.n .. 'j'] = {
 			function()
 				M.focus(-1)
 			end,
 			mode = 'n',
 			desc = 'Next terminal window',
 		},
-		['<leader>tk'] = {
+		[keyprefix.n .. 'k'] = {
 			function()
 				M.focus(1)
 			end,
 			mode = 'n',
 			desc = 'Previous terminal window',
 		},
-		['<leader>td'] = {
+		[keyprefix.n .. 'd'] = {
 			function()
 				local buf = api.nvim_get_current_buf()
 				if not H.is_term(buf) then
@@ -166,7 +170,7 @@ M.config = {
 			mode = 'n',
 			desc = 'Delete the terminal',
 		},
-		['<leader>tc'] = {
+		[keyprefix.n .. 'c'] = {
 			function()
 				local buf = api.nvim_get_current_buf()
 				if not H.is_term(buf) then
