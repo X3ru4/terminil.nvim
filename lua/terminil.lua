@@ -197,7 +197,7 @@ M.config = {
 }
 
 function H.setup_keys(keys)
-	for key, value in pairs(keys) do
+	for key, value in pairs(vim.deepcopy(keys)) do
 		if value then
 			local mode = value.mode or 't'
 			local rhs = value[1]
