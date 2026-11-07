@@ -171,17 +171,6 @@ M.config = {
 	auto_startinsert = true,
 }
 
-function H.setup_keys(keys)
-	for key, value in pairs(vim.deepcopy(keys)) do
-		if value then
-			local mode = value.mode or 't'
-			local rhs = value[1]
-			value[1], value.mode = nil, nil
-			vim.keymap.set(mode, key, rhs, value)
-		end
-	end
-end
-
 ---@param cmd string|string[]
 ---@return string
 function H.cmd_to_str(cmd)
@@ -286,11 +275,19 @@ function H.setup_autocmd()
 		group = augroup,
 		callback = function(ev)
 			H.windata[ev.buf] = nil
-			if vim.v.event.status ~= -1 then
-				M.close(ev.buf)
-			end
 		end,
 	})
+end
+
+function H.setup_keys(keys)
+	for key, value in pairs(vim.deepcopy(keys)) do
+		if value then
+			local mode = value.mode or 't'
+			local rhs = value[1]
+			value[1], value.mode = nil, nil
+			vim.keymap.set(mode, key, rhs, value)
+		end
+	end
 end
 
 ---Close the terminal
