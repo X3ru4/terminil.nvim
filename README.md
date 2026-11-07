@@ -7,9 +7,10 @@ _A simple plugin that makes interacting with the terminal easier._
 - **Open the terminal and configure your own window**
 - **Reopen the hidden terminal window while retaining the window configuration**
 - **Many default keymaps make interacting with the terminal simpler**
-- **Provides several useful helper functions**
+- **Provides many useful functions**
 - **Floating terminal window**
 - **Highly customizable**
+- **Toggle terminal**
 
 ## Installation
 
