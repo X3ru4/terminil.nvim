@@ -319,11 +319,15 @@ function H.setup_autocmds()
 			end
 		end,
 	})
+	local sus_buf = 0
 	autocmd('BufEnter', {
 		group = augroup,
 		callback = function(ev)
-			if H.is_term(ev.buf) and ev.buf then
-				H.prevbuf = ev.buf
+			if sus_buf ~= ev.buf then
+				H.prevbuf = sus_buf
+			end
+			if H.is_term(ev.buf) then
+				sus_buf = ev.buf
 			end
 		end,
 	})
