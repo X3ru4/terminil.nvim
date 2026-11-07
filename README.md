@@ -138,4 +138,4 @@ vim.keymap.set('n', '<leader>tw', terminil.open_in_order)
 
 ## Configuration
 
-[Default configuration](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L35-L197)
+[Default configuration](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L35-L168)
