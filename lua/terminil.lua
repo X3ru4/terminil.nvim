@@ -2,7 +2,7 @@
 ---@field use_default_keys boolean?
 ---@field keys [string, table|terminil.keyset|vim.keymap.set.Opts|false]?
 ---@field win_config vim.api.keyset.win_config? Default configuration for terminal windows when using the `M.open()` function.
----@field term_opts terminil.open.opts?
+---@field term_opts terminil.open.opts? Default terminal options
 ---@field on_open fun(buf: number, chan: number)?
 ---@field auto_startinsert boolean?
 
@@ -265,7 +265,7 @@ function H.is_termwin(win)
 	return vim.tbl_contains(H.list_termwins(), win)
 end
 
-function H.setup_autocmd()
+function H.setup_autocmds()
 	local autocmd = api.nvim_create_autocmd
 	local augroup = api.nvim_create_augroup('terminil.nvim', { clear = true })
 
@@ -587,7 +587,7 @@ end
 ---@param opts terminil.opts?
 function M.setup(opts)
 	M.config = vim.tbl_deep_extend('force', M.config, opts or {})
-	H.setup_autocmd()
+	H.setup_autocmds()
 	if M.config.use_default_keys then
 		H.setup_keys(M.config.keys)
 	end
