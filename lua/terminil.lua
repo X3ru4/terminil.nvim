@@ -23,7 +23,7 @@ local H = {}
 M.helper = H
 
 H.windata = {}
-H.prevterm = 0
+H.prevbuf = 0
 
 local api = vim.api
 local keyprefix = {
@@ -155,7 +155,7 @@ M.config = {
 			mode = 'n',
 			desc = 'Close the terminal',
 		},
-		[keyprefix.n .. 'c'] = {
+		[keyprefix.n .. 'y'] = {
 			function()
 				M.hide()
 			end,
@@ -279,11 +279,11 @@ function H.setup_autocmd()
 			H.windata[ev.buf] = nil
 		end,
 	})
-	autocmd('BufWinEnter', {
+	autocmd('BufEnter', {
 		group = augroup,
 		callback = function(ev)
-			if H.is_term(ev.buf) then
-				H.prevterm = ev.buf
+			if H.is_term(ev.buf) and ev.buf then
+				H.prevbuf = ev.buf
 			end
 		end,
 	})
@@ -542,7 +542,7 @@ function M.toggle(behavior)
 		if not H.is_term(buf) and not current_toggle then
 			return
 		end
-		if H.is_term(buf) and current_toggle and buf == current_toggle then
+		if H.is_term(buf) and current_toggle then
 			current_toggle = buf
 		end
 		current_toggle = current_toggle or buf
@@ -552,11 +552,11 @@ function M.toggle(behavior)
 		end
 		H.open_buf(current_toggle)
 	else
-		if next(H.buf_get_win(H.prevterm)) then
-			M.hide(H.prevterm)
+		if next(H.buf_get_win(H.prevbuf)) then
+			M.hide(H.prevbuf)
 			return
 		end
-		H.open_buf(H.prevterm)
+		H.open_buf(H.prevbuf)
 	end
 end
 
