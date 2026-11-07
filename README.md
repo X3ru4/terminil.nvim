@@ -166,5 +166,5 @@ terminil.toggle_buf(buf)    -- Toggle terminal buf
 
 ```lua
 -- You can use a different vim.ui.select() function via `ui_select`
-terminil.select(behavior: 'open'|'switch'|'delete'?, ui_select?)
+terminil.select(behavior: 'open'|'switch'|'close'?, ui_select?)
 ```

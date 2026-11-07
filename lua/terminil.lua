@@ -430,7 +430,7 @@ function M.open(win_config, opts)
 end
 
 ---@generic T
----@param behavior 'open'|'switch'|'delete'?
+---@param behavior 'open'|'switch'|'close'?
 ---@param ui_select fun(items: T[], opts: vim.ui.select.Opts, on_choice: fun(item: T|nil, idx: integer|nil))? Use this to replace the `vim.ui.select` function if you want to use a different function.
 function M.select(behavior, ui_select)
 	behavior = behavior or 'open'
@@ -463,7 +463,7 @@ function M.select(behavior, ui_select)
 					break
 				end
 			end
-		elseif behavior == 'delete' then
+		elseif behavior == 'close' then
 			M.close(item.bufnr)
 		else
 			H.open_buf(item.bufnr)
