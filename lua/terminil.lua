@@ -537,7 +537,13 @@ local current_toggle = nil
 ---@param behavior 'current'|'previous'?
 function M.toggle(behavior)
 	behavior = behavior or 'current'
-	if behavior == 'current' then
+	if behavior == 'previous' then
+		if next(H.buf_get_win(H.prevbuf)) then
+			M.hide(H.prevbuf)
+			return
+		end
+		H.open_buf(H.prevbuf)
+	else
 		local buf = api.nvim_get_current_buf()
 		if not H.is_term(buf) and not current_toggle then
 			return
@@ -551,12 +557,6 @@ function M.toggle(behavior)
 			return
 		end
 		H.open_buf(current_toggle)
-	else
-		if next(H.buf_get_win(H.prevbuf)) then
-			M.hide(H.prevbuf)
-			return
-		end
-		H.open_buf(H.prevbuf)
 	end
 end
 
