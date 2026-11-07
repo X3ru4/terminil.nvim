@@ -133,7 +133,7 @@ terminil.open_in_order(idx?)
 
 -- For example: If you hide a window or terminal and it has the number 1
 -- then you press the key combination `1<leader>tw` and it will open the terminal.
-vim.keymap.set('n', '<leader>tw', terminil.open_in_order)
+vim.keymap.set('n', '<leader>tt', terminil.open_in_order)
 ```
 
 ## Configuration
