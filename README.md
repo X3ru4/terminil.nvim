@@ -136,6 +136,13 @@ terminil.open_in_order(idx?)
 vim.keymap.set('n', '<leader>tt', terminil.open_in_order)
 ```
 
+### Hide and close the terminal
+
+```lua
+terminil.hide(idx?)
+terminil.close(buf?)
+```
+
 ## Configuration
 
 [Default configuration](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L35-L168)
