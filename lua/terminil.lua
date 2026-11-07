@@ -162,6 +162,20 @@ M.config = {
 			mode = 'n',
 			desc = 'Hide the terminal',
 		},
+		['<A-_>'] = {
+			function()
+				M.toggle('previous')
+			end,
+			mode = { 'n', 't' },
+			desc = 'Toggle previous terminal',
+		},
+		['<C-_>'] = {
+			function()
+				M.toggle('current')
+			end,
+			mode = { 'n', 't' },
+			desc = 'Toggle current terminal',
+		},
 	},
 	win_config = {
 		split = 'below',
@@ -232,7 +246,7 @@ end
 function H.list_termwins()
 	return vim.tbl_filter(function(win)
 		return H.is_term(api.nvim_win_get_buf(win))
-	end, api.nvim_list_wins())
+	end, api.nvim_tabpage_list_wins(0))
 end
 
 function H.list_termbufs()
@@ -242,7 +256,9 @@ function H.list_termbufs()
 end
 
 function H.buf_get_win(buf)
-	return vim.fn.win_findbuf(buf)
+	return vim.tbl_filter(function(win)
+		return api.nvim_win_get_buf(win) == buf
+	end, api.nvim_tabpage_list_wins(0))
 end
 
 function H.is_termwin(win)
@@ -277,6 +293,9 @@ function H.setup_autocmd()
 		group = augroup,
 		callback = function(ev)
 			H.windata[ev.buf] = nil
+			if H.prevbuf == ev.buf then
+				H.prevbuf = H.list_termbufs()[1]
+			end
 		end,
 	})
 	autocmd('BufEnter', {
@@ -533,30 +552,34 @@ function M.open_in_order(idx)
 	end
 end
 
-local current_toggle = nil
+---@param buf number
+function M.toggle_buf(buf)
+	if not H.is_term(buf) then
+		return
+	end
+	if next(H.buf_get_win(buf)) then
+		M.hide(buf)
+		return
+	end
+	H.open_buf(buf)
+end
+
+local cbuf = nil
 ---@param behavior 'current'|'previous'?
 function M.toggle(behavior)
 	behavior = behavior or 'current'
 	if behavior == 'previous' then
-		if next(H.buf_get_win(H.prevbuf)) then
-			M.hide(H.prevbuf)
-			return
-		end
-		H.open_buf(H.prevbuf)
+		M.toggle_buf(H.prevbuf)
 	else
 		local buf = api.nvim_get_current_buf()
-		if not H.is_term(buf) and not current_toggle then
+		if not H.is_term(buf) and not cbuf then
 			return
 		end
-		if H.is_term(buf) and current_toggle then
-			current_toggle = buf
+		if H.is_term(buf) and cbuf then
+			cbuf = buf
 		end
-		current_toggle = current_toggle or buf
-		if next(H.buf_get_win(current_toggle)) then
-			M.hide(current_toggle)
-			return
-		end
-		H.open_buf(current_toggle)
+		cbuf = cbuf or buf
+		M.toggle_buf(cbuf)
 	end
 end
 
