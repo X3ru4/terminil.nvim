@@ -178,9 +178,11 @@ M.config = {
 		},
 	},
 	win_config = {
-		split = 'below',
+		style = 'minimal',
 	},
-	term_opts = {},
+	term_opts = {
+		default = true,
+	},
 	---@diagnostic disable-next-line: unused-local
 	on_open = function(buf, chan) end,
 	auto_startinsert = true,
