@@ -564,22 +564,23 @@ function M.toggle_buf(buf)
 	H.open_buf(buf)
 end
 
-local cbuf = nil
+local tabbuf = {}
 ---@param behavior 'current'|'previous'?
 function M.toggle(behavior)
+	local tab = api.nvim_get_current_tabpage()
 	behavior = behavior or 'current'
 	if behavior == 'previous' then
 		M.toggle_buf(H.prevbuf)
 	else
 		local buf = api.nvim_get_current_buf()
-		if not H.is_term(buf) and not cbuf then
+		if not H.is_term(buf) and not tabbuf[tab] then
 			return
 		end
-		if H.is_term(buf) and cbuf then
-			cbuf = buf
+		if H.is_term(buf) and tabbuf[tab] then
+			tabbuf[tab] = buf
 		end
-		cbuf = cbuf or buf
-		M.toggle_buf(cbuf)
+		tabbuf[tab] = tabbuf[tab] or buf
+		M.toggle_buf(tabbuf[tab])
 	end
 end
 
