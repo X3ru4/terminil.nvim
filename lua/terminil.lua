@@ -38,16 +38,7 @@ M.config = {
 		[keyprefix.t .. 't'] = { '<cmd>stopinsert<cr>', desc = 'Stop insert in terminal mode' },
 		[keyprefix.t .. 'h'] = {
 			function()
-				local buf = api.nvim_get_current_buf()
-				if not H.is_term(buf) then
-					return
-				end
-				vim.bo.buflisted = false
-				if H.windata[buf] then
-					api.nvim_win_close(0, true)
-				else
-					vim.cmd('bnext')
-				end
+				M.hide()
 			end,
 			desc = 'Hide the terminal',
 		},
@@ -65,13 +56,9 @@ M.config = {
 		},
 		[keyprefix.t .. 'd'] = {
 			function()
-				local buf = api.nvim_get_current_buf()
-				if H.windata[buf] then
-					api.nvim_win_close(0, true)
-				end
-				api.nvim_buf_delete(buf, { force = true })
+				M.close()
 			end,
-			desc = 'Delete the terminal',
+			desc = 'Close the terminal',
 		},
 		[keyprefix.t .. 'm'] = {
 			function()
@@ -99,7 +86,11 @@ M.config = {
 		},
 		[keyprefix.n .. 't'] = {
 			function()
-				M.open()
+				if vim.v.count > 0 then
+					M.open_in_order()
+				else
+					M.open()
+				end
 			end,
 			mode = 'n',
 			desc = 'Open new terminal',
@@ -158,30 +149,14 @@ M.config = {
 		},
 		[keyprefix.n .. 'd'] = {
 			function()
-				local buf = api.nvim_get_current_buf()
-				if not H.is_term(buf) then
-					return
-				end
-				if H.windata[buf] then
-					api.nvim_win_close(0, true)
-				end
-				api.nvim_buf_delete(buf, { force = true })
+				M.close()
 			end,
 			mode = 'n',
-			desc = 'Delete the terminal',
+			desc = 'Close the terminal',
 		},
 		[keyprefix.n .. 'c'] = {
 			function()
-				local buf = api.nvim_get_current_buf()
-				if not H.is_term(buf) then
-					return
-				end
-				vim.bo.buflisted = false
-				if H.windata[buf] then
-					api.nvim_win_close(0, true)
-				else
-					vim.cmd('bnext')
-				end
+				M.hide()
 			end,
 			mode = 'n',
 			desc = 'Hide the terminal',
@@ -222,7 +197,7 @@ local exclude_ft = {
 	fzf = true,
 }
 function H.is_term(buf)
-	return vim.bo[buf] and vim.bo[buf].buftype == 'terminal' and not exclude_ft[vim.bo[buf].filetype]
+	return api.nvim_buf_is_valid(buf) and vim.bo[buf].buftype == 'terminal' and not exclude_ft[vim.bo[buf].filetype]
 end
 
 ---@param split 'horizontal'|'vertical'
@@ -311,8 +286,37 @@ function H.setup_autocmd()
 		group = augroup,
 		callback = function(ev)
 			H.windata[ev.buf] = nil
+			M.close(ev.buf)
 		end,
 	})
+end
+
+---Close the terminal
+---@param buf number?
+function M.close(buf)
+	buf = buf or api.nvim_get_current_buf()
+	if not H.is_term(buf) then
+		return
+	end
+	if H.windata[buf] then
+		api.nvim_win_close(0, true)
+	end
+	api.nvim_buf_delete(buf, { force = true })
+end
+
+---Hide the terminal
+---@param buf number?
+function M.hide(buf)
+	buf = buf or api.nvim_get_current_buf()
+	if not H.is_term(buf) then
+		return
+	end
+	vim.bo[buf].buflisted = false
+	if H.windata[buf] then
+		api.nvim_win_close(0, true)
+	else
+		vim.cmd('bnext')
+	end
 end
 
 ---@param win_config vim.api.keyset.win_config?
@@ -329,22 +333,17 @@ function M.open(win_config, opts)
 		return
 	end
 
-	local shell = vim.o.shell
-
-	if opts.shell then
-		if vim.fn.executable(opts.shell) == 1 then
-			vim.opt.shell = opts.shell
-		else
-			vim.notify('Invalid shell "' .. opts.shell .. '"', vim.log.levels.ERROR)
-			vim.notify('The terminal will use the default shell.')
-		end
+	if opts.shell and vim.fn.executable(opts.shell) ~= 1 then
+		opts.shell = nil
+		vim.notify('Invalid shell "' .. opts.shell .. '"', vim.log.levels.ERROR)
+		vim.notify('The terminal will use the default shell.')
 	end
 
 	local ok, err = pcall(function()
 		if not win_config then
-			vim.cmd.terminal()
+			vim.cmd.terminal(opts.shell or nil)
 			local bufnr = api.nvim_get_current_buf()
-			vim.bo[bufnr].buflisted = true
+			vim.bo[bufnr].buflisted = false
 			if opts.cmd then
 				api.nvim_chan_send(vim.bo[bufnr].channel, H.cmd_to_str(opts.cmd))
 			end
@@ -355,8 +354,8 @@ function M.open(win_config, opts)
 			local bufnr = api.nvim_create_buf(false, true)
 			H.windata[bufnr] = win_config
 			api.nvim_buf_call(bufnr, function()
-				vim.cmd.terminal()
-				vim.bo[bufnr].buflisted = true
+				vim.cmd.terminal(opts.shell or nil)
+				vim.bo[bufnr].buflisted = false
 				if opts.cmd then
 					api.nvim_chan_send(vim.bo[bufnr].channel, H.cmd_to_str(opts.cmd))
 				end
@@ -368,7 +367,6 @@ function M.open(win_config, opts)
 		end
 	end)
 
-	vim.opt.shell = shell
 	if not ok and err then
 		vim.notify(err, vim.log.levels.ERROR)
 	end
@@ -495,7 +493,7 @@ function M.switch(direction, count)
 end
 
 ---Similar to the `M.switch` function, but with the index you want
----@param idx number > 0
+---@param idx number? > 0
 function M.switch_in_order(idx)
 	local count = idx or vim.v.count
 	if count < 1 then
@@ -512,7 +510,7 @@ function M.switch_in_order(idx)
 end
 
 ---Similar to the `H.open_buf` function, but with the index you want
----@param idx number > 0
+---@param idx number? > 0
 function M.open_in_order(idx)
 	local count = idx or vim.v.count
 	if count < 1 then
