@@ -41,7 +41,11 @@ vim.g.tnil_keyprefix_t = '<C-t>' -- Default: '<C-t>'
 require('terminil').setup()
 ```
 
-## Cooking recipes
+## Configuration
+
+[Default configuration](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L36-L187)
+
+## Docs
 
 ### Terminal in floating window
 
@@ -155,7 +159,3 @@ terminil.toggle_buf(buf)    -- Toggle terminal buf
 - Default keymaps
   - `<A-_>` Toggle previous terminal
   - `<C-_>` Toggle current terminal
-
-## Configuration
-
-[Default configuration](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L36-L187)
