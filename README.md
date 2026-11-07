@@ -159,3 +159,10 @@ terminil.toggle_buf(buf)    -- Toggle terminal buf
 - Default keymaps
   - `<A-_>` Toggle previous terminal
   - `<C-_>` Toggle current terminal
+
+### Select a terminal
+
+```lua
+-- You can use a different vim.ui.select() function via `ui_select`
+terminil.select(ui_select?)
+```
