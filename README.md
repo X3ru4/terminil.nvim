@@ -4,13 +4,15 @@ _A simple plugin that makes interacting with the terminal easier._
 
 ## Features
 
-- **Open the terminal and configure your own window**
 - **Reopen the hidden terminal window while retaining the window configuration**
 - **Many default keymaps make interacting with the terminal simpler**
+- **Open the terminal and configure your own window**
 - **Provides many useful functions**
 - **Floating terminal window**
 - **Highly customizable**
-- **Toggle terminal**
+- **Toggle the terminal**
+- **Rename the terminal**
+- etc.
 
 ## Installation
 
