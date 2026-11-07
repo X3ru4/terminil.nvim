@@ -23,7 +23,7 @@ local H = {}
 M.helper = H
 
 H.windata = {}
-H.prevbuf = {}
+H.prevbuf = 0
 
 local api = vim.api
 local keyprefix = {
@@ -314,11 +314,8 @@ function H.setup_autocmds()
 		group = augroup,
 		callback = function(ev)
 			H.windata[ev.buf] = nil
-			if H.prevbuf[2] == ev.buf then
-				H.prevbuf[2] = H.list_termbufs()[1]
-			end
-			if H.prevbuf[1] == ev.buf then
-				H.prevbuf[1] = H.prevbuf[2]
+			if H.prevbuf == ev.buf then
+				H.prevbuf = H.list_termbufs()[1]
 			end
 		end,
 	})
@@ -326,8 +323,7 @@ function H.setup_autocmds()
 		group = augroup,
 		callback = function(ev)
 			if H.is_term(ev.buf) and ev.buf then
-				H.prevbuf[2] = H.prevbuf[1]
-				H.prevbuf[1] = ev.buf
+				H.prevbuf = ev.buf
 			end
 		end,
 	})
@@ -612,7 +608,7 @@ end
 function M.toggle(behavior)
 	behavior = behavior or 'current'
 	if behavior == 'previous' then
-		M.toggle_buf(H.prevbuf[1])
+		M.toggle_buf(H.prevbuf)
 	else
 		local buf = api.nvim_get_current_buf()
 		if not H.is_term(buf) and not vim.t.tnil_togglebuf then
