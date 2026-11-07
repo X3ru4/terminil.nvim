@@ -24,7 +24,6 @@ M.helper = H
 
 H.windata = {}
 H.prevbuf = 0
-local tabs_togglebuf = {} -- This table is used to store data for the M.toggle() function
 
 local api = vim.api
 local keyprefix = {
@@ -312,7 +311,7 @@ function H.setup_autocmds()
 	autocmd('TabClosedPre', {
 		group = augroup,
 		callback = function()
-			tabs_togglebuf[api.nvim_get_current_tabpage()] = nil
+			vim.t.togglebuf = nil
 		end,
 	})
 end
@@ -575,20 +574,19 @@ end
 
 ---@param behavior 'current'|'previous'?
 function M.toggle(behavior)
-	local tab = api.nvim_get_current_tabpage()
 	behavior = behavior or 'current'
 	if behavior == 'previous' then
 		M.toggle_buf(H.prevbuf)
 	else
 		local buf = api.nvim_get_current_buf()
-		if not H.is_term(buf) and not tabs_togglebuf[tab] then
+		if not H.is_term(buf) and not vim.t.togglebuf then
 			return
 		end
-		if H.is_term(buf) and tabs_togglebuf[tab] then
-			tabs_togglebuf[tab] = buf
+		if H.is_term(buf) and vim.t.togglebuf then
+			vim.t.togglebuf = buf
 		end
-		tabs_togglebuf[tab] = tabs_togglebuf[tab] or buf
-		M.toggle_buf(tabs_togglebuf[tab])
+		vim.t.togglebuf = vim.t.togglebuf or buf
+		M.toggle_buf(vim.t.togglebuf)
 	end
 end
 
