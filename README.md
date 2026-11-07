@@ -140,7 +140,7 @@ vim.keymap.set('n', '<leader>tt', terminil.open_in_order)
 ### Hide and close the terminal
 
 ```lua
-terminil.hide(idx?)
+terminil.hide(buf?)
 terminil.close(buf?)
 ```
 
