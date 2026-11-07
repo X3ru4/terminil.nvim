@@ -120,10 +120,10 @@ Most functions use the count prefix
 ```lua
 -- Switch to a different terminal in the current window
 terminil.switch(-1) -- switch to the previous terminal
-terminil.switch(1) -- switch to the next terminal
+terminil.switch(1)  -- switch to the next terminal
 
-terminil.focus(-1) -- Jump to the previous terminal window
-terminil.focus(1) -- Jump to the next terminal window
+terminil.focus(-1)  -- Jump to the previous terminal window
+terminil.focus(1)   -- Jump to the next terminal window
 ```
 
 Use indexes for control
@@ -147,9 +147,9 @@ terminil.close(buf?)
 ### Toggle terminal
 
 ```lua
-terminil.toggle('current') -- Toggle current terminal
+terminil.toggle('current')  -- Toggle current terminal
 terminil.toggle('previous') -- Toggle previous terminal
-terminil.toggle_buf(buf) -- Toggle terminal buf
+terminil.toggle_buf(buf)    -- Toggle terminal buf
 ```
 
 - Default keymaps
