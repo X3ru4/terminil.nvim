@@ -23,6 +23,7 @@ local H = {}
 M.helper = H
 
 H.windata = {}
+H.prevterm = 0
 
 local api = vim.api
 local keyprefix = {
@@ -209,21 +210,22 @@ end
 ---Open terminal buffer more intelligently
 ---@param buf number
 function H.open_buf(buf)
-	if H.is_term(buf) then
-		if H.windata[buf] then
-			local wins = H.buf_get_win(buf)
-			if #wins > 0 then
-				if #wins == 1 and api.nvim_win_is_valid(wins[1]) then
-					api.nvim_set_current_win(wins[1])
-				else
-					vim.notify('This buffer: ' .. buf .. ' is running across multiple windows.', vim.log.levels.WARN)
-				end
+	if not H.is_term(buf) then
+		return
+	end
+	if H.windata[buf] then
+		local wins = H.buf_get_win(buf)
+		if #wins > 0 then
+			if #wins == 1 and api.nvim_win_is_valid(wins[1]) then
+				api.nvim_set_current_win(wins[1])
 			else
-				api.nvim_open_win(buf, true, H.windata[buf])
+				vim.notify('This buffer: ' .. buf .. ' is running across multiple windows.', vim.log.levels.WARN)
 			end
 		else
-			api.nvim_set_current_buf(buf)
+			api.nvim_open_win(buf, true, H.windata[buf])
 		end
+	else
+		api.nvim_set_current_buf(buf)
 	end
 end
 
@@ -277,6 +279,14 @@ function H.setup_autocmd()
 			H.windata[ev.buf] = nil
 		end,
 	})
+	autocmd('BufWinEnter', {
+		group = augroup,
+		callback = function(ev)
+			if H.is_term(ev.buf) then
+				H.prevterm = ev.buf
+			end
+		end,
+	})
 end
 
 function H.setup_keys(keys)
@@ -297,8 +307,9 @@ function M.close(buf)
 	if not H.is_term(buf) then
 		return
 	end
-	if H.windata[buf] then
-		api.nvim_win_close(0, true)
+	local wins = H.buf_get_win(buf)
+	if H.windata[buf] and wins[1] then
+		api.nvim_win_close(wins[1], true)
 	end
 	api.nvim_buf_delete(buf, { force = true })
 end
@@ -311,8 +322,9 @@ function M.hide(buf)
 		return
 	end
 	vim.bo[buf].buflisted = false
-	if H.windata[buf] then
-		api.nvim_win_close(0, true)
+	local wins = H.buf_get_win(buf)
+	if H.windata[buf] and wins[1] then
+		api.nvim_win_close(wins[1], true)
 	else
 		vim.cmd('bnext')
 	end
@@ -518,6 +530,33 @@ function M.open_in_order(idx)
 	local buf = H.list_termbufs()[count]
 	if buf then
 		H.open_buf(buf)
+	end
+end
+
+local current_toggle = nil
+---@param behavior 'current'|'previous'?
+function M.toggle(behavior)
+	behavior = behavior or 'current'
+	if behavior == 'current' then
+		local buf = api.nvim_get_current_buf()
+		if not H.is_term(buf) and not current_toggle then
+			return
+		end
+		if H.is_term(buf) and current_toggle and buf == current_toggle then
+			current_toggle = buf
+		end
+		current_toggle = current_toggle or buf
+		if next(H.buf_get_win(current_toggle)) then
+			M.hide(current_toggle)
+			return
+		end
+		H.open_buf(current_toggle)
+	else
+		if next(H.buf_get_win(H.prevterm)) then
+			M.hide(H.prevterm)
+			return
+		end
+		H.open_buf(H.prevterm)
 	end
 end
 
