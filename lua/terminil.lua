@@ -614,7 +614,7 @@ function M.toggle(behavior)
 		if not H.is_term(buf) and not vim.t.tnil_togglebuf then
 			return
 		end
-		if H.is_term(buf) and vim.t.tnil_togglebuf then
+		if H.is_term(buf) and vim.t.tnil_togglebuf and buf ~= H.prevbuf then
 			vim.t.tnil_togglebuf = buf
 		end
 		vim.t.tnil_togglebuf = vim.t.tnil_togglebuf or buf
