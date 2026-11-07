@@ -311,7 +311,7 @@ function H.setup_autocmds()
 	autocmd('TabClosedPre', {
 		group = augroup,
 		callback = function()
-			vim.t.togglebuf = nil
+			vim.t.tnil_togglebuf = nil
 		end,
 	})
 end
@@ -579,14 +579,14 @@ function M.toggle(behavior)
 		M.toggle_buf(H.prevbuf)
 	else
 		local buf = api.nvim_get_current_buf()
-		if not H.is_term(buf) and not vim.t.togglebuf then
+		if not H.is_term(buf) and not vim.t.tnil_togglebuf then
 			return
 		end
-		if H.is_term(buf) and vim.t.togglebuf then
-			vim.t.togglebuf = buf
+		if H.is_term(buf) and vim.t.tnil_togglebuf then
+			vim.t.tnil_togglebuf = buf
 		end
-		vim.t.togglebuf = vim.t.togglebuf or buf
-		M.toggle_buf(vim.t.togglebuf)
+		vim.t.tnil_togglebuf = vim.t.tnil_togglebuf or buf
+		M.toggle_buf(vim.t.tnil_togglebuf)
 	end
 end
 
