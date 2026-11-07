@@ -91,13 +91,13 @@ terminil.open(nil, { shell = 'zsh' })
 ### Disable default keymaps
 
 ```lua
-opts = {
+terminil.setup({
     keys = {
         ['<leader>tf'] = false,
         ['<leader>th'] = false,
         ['<leader>tv'] = false,
     }
-}
+})
 ```
 
 ### Open multiple windows at the same time
@@ -143,6 +143,18 @@ terminil.hide(idx?)
 terminil.close(buf?)
 ```
 
+### Toggle terminal
+
+```lua
+terminil.toggle('current') -- Toggle current terminal
+terminil.toggle('previous') -- Toggle previous terminal
+terminil.toggle_buf(buf) -- Toggle terminal buf
+```
+
+- Default keymaps
+  - `<A-_>` Toggle previous terminal
+  - `<C-_>` Toggle current terminal
+
 ## Configuration
 
-[Default configuration](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L35-L168)
+[Default configuration](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L36-L187)
