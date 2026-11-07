@@ -286,7 +286,9 @@ function H.setup_autocmd()
 		group = augroup,
 		callback = function(ev)
 			H.windata[ev.buf] = nil
-			M.close(ev.buf)
+			if vim.v.event.status ~= -1 then
+				M.close(ev.buf)
+			end
 		end,
 	})
 end
