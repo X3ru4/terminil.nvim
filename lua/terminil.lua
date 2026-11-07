@@ -177,12 +177,8 @@ M.config = {
 			desc = 'Toggle current terminal',
 		},
 	},
-	win_config = {
-		style = 'minimal',
-	},
-	term_opts = {
-		default = true,
-	},
+	win_config = {},
+	term_opts = {},
 	---@diagnostic disable-next-line: unused-local
 	on_open = function(buf, chan) end,
 	auto_startinsert = true,
