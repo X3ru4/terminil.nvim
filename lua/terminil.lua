@@ -23,7 +23,7 @@ local H = {}
 M.helper = H
 
 H.windata = {}
-H.prevbuf = 0
+H.prevbuf = {}
 
 local api = vim.api
 local keyprefix = {
@@ -47,13 +47,13 @@ M.config = {
 			function()
 				M.focus(-1)
 			end,
-			desc = 'Next terminal window',
+			desc = 'Previous terminal window',
 		},
 		[keyprefix.t .. 'k'] = {
 			function()
 				M.focus(1)
 			end,
-			desc = 'Previous terminal window',
+			desc = 'Next terminal window',
 		},
 		[keyprefix.t .. 'd'] = {
 			function()
@@ -139,14 +139,14 @@ M.config = {
 				M.focus(-1)
 			end,
 			mode = 'n',
-			desc = 'Next terminal window',
+			desc = 'Previous terminal window',
 		},
 		[keyprefix.n .. 'k'] = {
 			function()
 				M.focus(1)
 			end,
 			mode = 'n',
-			desc = 'Previous terminal window',
+			desc = 'Next terminal window',
 		},
 		[keyprefix.n .. 'd'] = {
 			function()
@@ -161,6 +161,29 @@ M.config = {
 			end,
 			mode = 'n',
 			desc = 'Hide the terminal',
+		},
+		[keyprefix.n .. 'g'] = {
+			function()
+				if vim.v.count > 0 then
+					M.switch_in_order()
+				end
+			end,
+			mode = 'n',
+			desc = 'Switch terminal',
+		},
+		[keyprefix.n .. 'w'] = {
+			function()
+				M.switch(-1)
+			end,
+			mode = 'n',
+			desc = 'Switch to previous terminal',
+		},
+		[keyprefix.n .. 'e'] = {
+			function()
+				M.switch(1)
+			end,
+			mode = 'n',
+			desc = 'Switch to next terminal',
 		},
 		['<A-_>'] = {
 			function()
@@ -291,8 +314,11 @@ function H.setup_autocmds()
 		group = augroup,
 		callback = function(ev)
 			H.windata[ev.buf] = nil
-			if H.prevbuf == ev.buf then
-				H.prevbuf = H.list_termbufs()[1]
+			if H.prevbuf[2] == ev.buf then
+				H.prevbuf[2] = H.list_termbufs()[1]
+			end
+			if H.prevbuf[1] == ev.buf then
+				H.prevbuf[1] = H.prevbuf[2]
 			end
 		end,
 	})
@@ -300,7 +326,8 @@ function H.setup_autocmds()
 		group = augroup,
 		callback = function(ev)
 			if H.is_term(ev.buf) and ev.buf then
-				H.prevbuf = ev.buf
+				H.prevbuf[2] = H.prevbuf[1]
+				H.prevbuf[1] = ev.buf
 			end
 		end,
 	})
@@ -375,7 +402,7 @@ function M.open(win_config, opts)
 
 	local ok, err = pcall(function()
 		if not win_config then
-			vim.cmd.terminal(opts.shell or nil)
+			vim.cmd.terminal(opts.shell)
 			local bufnr = api.nvim_get_current_buf()
 			vim.bo[bufnr].buflisted = false
 			if opts.cmd then
@@ -388,7 +415,7 @@ function M.open(win_config, opts)
 			local bufnr = api.nvim_create_buf(false, true)
 			H.windata[bufnr] = win_config
 			api.nvim_buf_call(bufnr, function()
-				vim.cmd.terminal(opts.shell or nil)
+				vim.cmd.terminal(opts.shell)
 				vim.bo[bufnr].buflisted = false
 				if opts.cmd then
 					api.nvim_chan_send(vim.bo[bufnr].channel, H.cmd_to_str(opts.cmd))
@@ -407,8 +434,10 @@ function M.open(win_config, opts)
 end
 
 ---@generic T
+---@param behavior 'open'|'switch'|'delete'?
 ---@param ui_select fun(items: T[], opts: vim.ui.select.Opts, on_choice: fun(item: T|nil, idx: integer|nil))? Use this to replace the `vim.ui.select` function if you want to use a different function.
-function M.select(ui_select)
+function M.select(behavior, ui_select)
+	behavior = behavior or 'open'
 	local termbufs = {}
 	for idx, buf in ipairs(H.list_termbufs()) do
 		table.insert(termbufs, {
@@ -431,7 +460,18 @@ function M.select(ui_select)
 		if not item then
 			return
 		end
-		H.open_buf(item.bufnr)
+		if behavior == 'switch' then
+			for idx, buf in ipairs(H.list_termbufs()) do
+				if buf == item.bufnr then
+					M.switch_in_order(idx)
+					break
+				end
+			end
+		elseif behavior == 'delete' then
+			M.close(item.bufnr)
+		else
+			H.open_buf(item.bufnr)
+		end
 	end)
 end
 
@@ -572,7 +612,7 @@ end
 function M.toggle(behavior)
 	behavior = behavior or 'current'
 	if behavior == 'previous' then
-		M.toggle_buf(H.prevbuf)
+		M.toggle_buf(H.prevbuf[1])
 	else
 		local buf = api.nvim_get_current_buf()
 		if not H.is_term(buf) and not vim.t.tnil_togglebuf then
