@@ -54,8 +54,8 @@ require('terminil').setup()
 ```lua
 local terminil = require('terminil')
 vim.keymap.set('n', '<leader>tf', function()
-    local width = terminil.helper.size('width', 0.7)
-    local height = terminil.helper.size('height', 0.6)
+    local width = terminil.h.size('width', 0.7)
+    local height = terminil.h.size('height', 0.6)
     terminil.open({
         relative = 'editor',
         title = ' >_ Terminal ',
@@ -95,14 +95,32 @@ terminil.open(nil, {
 terminil.open(nil, { shell = 'zsh' })
 ```
 
-### Disable default keymaps
+### Keymaps
 
 ```lua
+local buf = nil
 terminil.setup({
     keys = {
+        -- Set it to false to disable keymap
         ['<leader>tf'] = false,
         ['<leader>th'] = false,
         ['<leader>tv'] = false,
+        -- Create your own keymaps. See: vim.keymap.set()
+        ['<M-/>'] = {
+            function() -- rhs
+                if not buf or not terminil.h.is_term(buf) then
+                    local data = terminil.open({
+                        split = 'below',
+                    })
+                    buf = data.buf
+                else
+                    terminil.toggle_buf(buf)
+                end
+            end,
+            mode = { 'n', 't' }, -- Default: mode = 't'
+            -- opts
+            desc = 'Toggle below terminal',
+        },
     }
 })
 ```
@@ -113,7 +131,7 @@ terminil.setup({
 terminil.open_multiple(3)
 ```
 
-Split in your own style
+Split according to your style, and it will repeat your configuration in cycles.
 
 ```lua
 terminil.open_multiple(5, { 'above', { split = 'left', width = 10 }, 'right' })
@@ -135,8 +153,8 @@ terminil.focus(1)   -- Jump to the next terminal window
 Use indexes for control
 
 ```lua
-terminil.switch_in_order(idx?)
-terminil.open_in_order(idx?)
+terminil.switch_in_order(idx: number?)
+terminil.open_in_order(idx: number?)
 
 -- For example: If you hide a window or terminal and it has the number 1
 -- then you press the key combination `1<leader>tt` and it will open the terminal.
@@ -146,8 +164,8 @@ vim.keymap.set('n', '<leader>tt', terminil.open_in_order)
 ### Hide and close the terminal
 
 ```lua
-terminil.hide(buf?)
-terminil.close(buf?)
+terminil.hide(buf: number?)
+terminil.close(buf: number?)
 ```
 
 ### Toggle terminal
@@ -155,7 +173,7 @@ terminil.close(buf?)
 ```lua
 terminil.toggle('current')  -- Toggle current terminal
 terminil.toggle('previous') -- Toggle previous terminal
-terminil.toggle_buf(buf)    -- Toggle terminal buf
+terminil.toggle_buf(buf: number)    -- Toggle terminal buf
 ```
 
 - Default keymaps
