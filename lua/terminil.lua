@@ -20,7 +20,7 @@
 
 local M = {}
 local H = {}
-M.helper = H
+M.h = H
 
 H.windata = {}
 H.prevbuf = 0
@@ -244,24 +244,28 @@ end
 
 ---Open terminal buffer more intelligently
 ---@param buf number
+---@return number? -- window id
 function H.open_buf(buf)
 	if not H.is_term(buf) then
 		return
 	end
+	local win = nil
 	if H.windata[buf] then
 		local wins = H.buf_get_win(buf)
 		if #wins > 0 then
 			if #wins == 1 and api.nvim_win_is_valid(wins[1]) then
+				win = wins[1]
 				api.nvim_set_current_win(wins[1])
 			else
 				vim.notify('This buffer: ' .. buf .. ' is running across multiple windows.', vim.log.levels.WARN)
 			end
 		else
-			api.nvim_open_win(buf, true, H.windata[buf])
+			win = api.nvim_open_win(buf, true, H.windata[buf])
 		end
 	else
 		api.nvim_set_current_buf(buf)
 	end
+	return win
 end
 
 function H.list_termwins()
@@ -382,6 +386,7 @@ end
 
 ---@param win_config vim.api.keyset.win_config?
 ---@param opts terminil.open.opts?
+---@return { buf: number, win: number? }
 function M.open(win_config, opts)
 	opts = vim.tbl_deep_extend('force', M.config.term_opts, opts or {})
 	if opts.default then
@@ -390,8 +395,7 @@ function M.open(win_config, opts)
 
 	if opts.buf and H.is_term(opts.buf) then
 		H.windata[opts.buf] = win_config or H.windata[opts.buf]
-		H.open_buf(opts.buf)
-		return
+		return { buf = opts.buf, win = H.open_buf(opts.buf) }
 	end
 
 	if opts.shell and vim.fn.executable(opts.shell) ~= 1 then
@@ -400,6 +404,7 @@ function M.open(win_config, opts)
 		vim.notify('The terminal will use the default shell.')
 	end
 
+	local data = {}
 	local ok, err = pcall(function()
 		if not win_config then
 			vim.cmd.terminal(opts.shell)
@@ -411,6 +416,8 @@ function M.open(win_config, opts)
 			if opts.buf_call then
 				opts.buf_call(bufnr)
 			end
+			data.buf = bufnr
+			data.win = api.nvim_get_current_win()
 		else
 			local bufnr = api.nvim_create_buf(false, true)
 			H.windata[bufnr] = win_config
@@ -424,13 +431,16 @@ function M.open(win_config, opts)
 					opts.buf_call(bufnr)
 				end
 			end)
-			api.nvim_open_win(bufnr, true, win_config)
+			data.buf = bufnr
+			data.win = api.nvim_open_win(bufnr, true, win_config)
 		end
 	end)
 
 	if not ok and err then
 		vim.notify(err, vim.log.levels.ERROR)
 	end
+
+	return data
 end
 
 ---@generic T
@@ -542,6 +552,9 @@ end
 function M.switch(direction, count)
 	count = count or vim.v.count1
 	local termbufs = H.list_termbufs()
+	if not next(termbufs) then
+		return
+	end
 	local current_buf = api.nvim_get_current_buf()
 	for i, buf in ipairs(termbufs) do
 		if buf == current_buf then
