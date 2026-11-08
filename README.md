@@ -102,9 +102,9 @@ local buf = nil
 terminil.setup({
     keys = {
         -- Set it to false to disable keymap
-        ['<leader>tf'] = false,
-        ['<leader>th'] = false,
-        ['<leader>tv'] = false,
+        [vim.g.tnil_keyprefix_n .. 'f'] = false,
+        [vim.g.tnil_keyprefix_n .. 'h'] = false,
+        [vim.g.tnil_keyprefix_n .. 'v'] = false,
         -- Create your own keymaps. See: vim.keymap.set()
         ['<M-/>'] = {
             function() -- rhs
@@ -121,7 +121,9 @@ terminil.setup({
             -- opts
             desc = 'Toggle below terminal',
         },
-    }
+    },
+    -- Set it to false if you want to disable all default keymaps
+    use_default_keys = true,
 })
 ```
 
