@@ -12,7 +12,7 @@ _A simple plugin that makes interacting with the terminal easier._
 - **Highly customizable**
 - **Toggle the terminal**
 - **Rename the terminal**
-- etc.
+- _etc_.
 
 ## Installation
 
