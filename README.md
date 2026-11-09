@@ -24,8 +24,8 @@ return {
     event = 'VeryLazy',
     init = function()
         -- Change the prefix of the default keymaps.
-        vim.g.tnil_keyprefix_n = 'gt'    -- Default: '<leader>t'
-        vim.g.tnil_keyprefix_t = '<C-t>' -- Default: '<C-t>'
+        vim.g.tnil_keyprefix_n = 'gt'    -- For normal mode   Default: '<leader>t'
+        vim.g.tnil_keyprefix_t = '<C-t>' -- For terminal mode Default: '<C-t>'
     end,
     ---@module 'terminil'
     ---@type terminil.opts
@@ -38,14 +38,14 @@ With vim.pack
 ```lua
 vim.pack.add({ 'https://github.com/X3ru4/terminil.nvim' })
 -- Change the prefix of the default keymaps.
-vim.g.tnil_keyprefix_n = 'gt'    -- Default: '<leader>t'
-vim.g.tnil_keyprefix_t = '<C-t>' -- Default: '<C-t>'
+vim.g.tnil_keyprefix_n = 'gt'    -- For normal mode   Default: '<leader>t'
+vim.g.tnil_keyprefix_t = '<C-t>' -- For terminal mode Default: '<C-t>'
 require('terminil').setup()
 ```
 
 ## Configuration
 
-[Default configuration](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L36-L189)
+[Default configuration](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L36-L237)
 
 ## Docs
 
@@ -152,6 +152,12 @@ terminil.focus(-1)  -- Jump to the previous terminal window
 terminil.focus(1)   -- Jump to the next terminal window
 ```
 
+- Default keymaps
+  - `vim.g.tnil_keyprefix_t + e` Switch to the next terminal
+  - `vim.g.tnil_keyprefix_n + e` Switch to the next terminal
+  - `vim.g.tnil_keyprefix_t + w` Switch to the previous terminal
+  - `vim.g.tnil_keyprefix_n + w` Switch to the previous terminal
+
 Use indexes for control
 
 ```lua
@@ -188,3 +194,12 @@ terminil.toggle_buf(buf: number)    -- Toggle terminal buf
 -- You can use a different vim.ui.select() function via `ui_select`
 terminil.select(behavior?: 'open'|'switch'|'close', ui_select?)
 ```
+
+- Default keymaps
+  - `vim.g.tnil_keyprefix_n + s`
+    - Open a window using `vim.ui.select` and select a terminal
+    - It uses a count prefix to select behavior in a specific order. Default: `open`
+      1. `open`
+      2. `switch`
+      3. `close`
+    - Ex: `2<key>` to use the `switch` behavior
