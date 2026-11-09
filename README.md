@@ -45,7 +45,7 @@ require('terminil').setup()
 
 ## Configuration
 
-[Default configuration](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L36-L237)
+[Default configuration](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L36-L239)
 
 ## Docs
 
@@ -191,15 +191,30 @@ terminil.toggle_buf(buf: number)    -- Toggle terminal buf
 ### Select a terminal
 
 ```lua
+-- Use the `vim.ui.select` or `ui_select` function to display all terminals
+-- and select one.
 -- You can use a different vim.ui.select() function via `ui_select`
+-- behavior:
+-- |'open'   Open terminal.
+-- |'switch' Open the selected terminal in the current window.
+-- |'close'  Close the selected terminal.
 terminil.select(behavior?: 'open'|'switch'|'close', ui_select?)
 ```
 
 - Default keymaps
   - `vim.g.tnil_keyprefix_n + s`
-    - Open a window using `vim.ui.select` and select a terminal
     - It uses a count prefix to select behavior in a specific order. Default: `open`
       - 1 `open`
       - 2 `switch`
       - 3 `close`
     - Ex: `2<key>` to use the `switch` behavior
+
+### termonly(...)
+
+Similar to the `tabonly` command. See `:tabonly`
+
+```lua
+-- `behavior` default is 'hide'
+-- 'buf'      default is current buffer
+terminil.termonly(behavior?: 'close'|'hide', buf?: number)
+```
