@@ -214,7 +214,7 @@ terminil.select(behavior?: 'open'|'switch'|'close', ui_select?)
 Similar to the `tabonly` command. See `:tabonly`
 
 ```lua
--- `behavior` default is 'hide'
+-- `behavior` default is 'hide'. Be careful when using 'close'.
 -- 'buf'      default is current buffer
 terminil.termonly(behavior?: 'close'|'hide', buf?: number)
 ```
