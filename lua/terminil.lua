@@ -78,6 +78,30 @@ M.config = {
 			end,
 			desc = 'Remame the terminal',
 		},
+		[keyprefix.t .. 'w'] = {
+			function()
+				M.switch(-1)
+			end,
+			desc = 'Switch to previous terminal',
+		},
+		[keyprefix.t .. 'e'] = {
+			function()
+				M.switch(1)
+			end,
+			desc = 'Switch to next terminal',
+		},
+		[keyprefix.n .. 'n'] = {
+			function()
+				vim.ui.input({ prompt = 'New name: ' }, function(input)
+					if not input then
+						return
+					end
+					api.nvim_buf_set_name(0, input)
+				end)
+			end,
+			mode = 'n',
+			desc = 'Remame the terminal',
+		},
 		[keyprefix.n .. 'm'] = {
 			function()
 				M.open_multiple()
@@ -129,7 +153,12 @@ M.config = {
 		},
 		[keyprefix.n .. 's'] = {
 			function()
-				M.select()
+				local behaviors = {
+					'open',
+					'switch',
+					'close',
+				}
+				M.select(behaviors[vim.v.count1] or 'open')
 			end,
 			mode = 'n',
 			desc = 'Select terminal',
@@ -546,6 +575,7 @@ function M.focus(direction, count)
 	api.nvim_set_current_win(next_win)
 end
 
+local switch_echo
 ---Switch to a different terminal in the current window in order
 ---@param direction -1|1
 ---@param count number?
@@ -558,23 +588,36 @@ function M.switch(direction, count)
 	local current_buf = api.nvim_get_current_buf()
 	for i, buf in ipairs(termbufs) do
 		if buf == current_buf then
-			local next_buf = 0
+			local next_idx
 			if direction < 0 then
 				local idx = i - count
 				if idx <= 0 then
-					next_buf = termbufs[#termbufs + (idx % -#termbufs)]
+					next_idx = #termbufs + (idx % -#termbufs)
 				else
-					next_buf = termbufs[idx]
+					next_idx = idx
 				end
 			else
-				next_buf = termbufs[(((i + count) - 1) % #termbufs) + 1]
+				next_idx = (((i + count) - 1) % #termbufs) + 1
 			end
-			H.windata[next_buf] = H.windata[current_buf]
+
+			local next_buf = termbufs[next_idx]
 			local opening_wins = H.buf_get_win(next_buf)
-			if #opening_wins == 1 then
+			H.windata[next_buf] = H.windata[current_buf]
+
+			if opening_wins[1] and opening_wins[1] ~= api.nvim_get_current_win() then
 				api.nvim_win_close(opening_wins[1], true)
 			end
 			api.nvim_win_set_buf(0, next_buf)
+
+			switch_echo = api.nvim_echo({
+				{ 'Terminal index: prev: ' },
+				{ tostring((((next_idx - 1) - 1) % #termbufs) + 1), 'Number' },
+				{ ' current: ' },
+				{ tostring(next_idx), 'Type' },
+				{ ' next: ' },
+				{ tostring((((next_idx + 1) - 1) % #termbufs) + 1), 'Number' },
+			}, false, { id = switch_echo })
+			break
 		end
 	end
 end
