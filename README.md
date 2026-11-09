@@ -45,7 +45,7 @@ require('terminil').setup()
 
 ## Configuration
 
-[Default configuration](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L36-L239)
+[Default configuration](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L37-L240)
 
 ## Docs
 
