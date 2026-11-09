@@ -4,6 +4,7 @@
 ---@field win_config vim.api.keyset.win_config? Default configuration for terminal windows when using the `M.open()` function.
 ---@field term_opts terminil.open.opts? Default terminal options
 ---@field on_open fun(buf: number, chan: number)?
+---@field on_exit fun(buf: number, exitcode: number)?
 ---@field auto_startinsert boolean?
 
 ---@class terminil.open.opts
@@ -233,6 +234,8 @@ M.config = {
 	term_opts = {},
 	---@diagnostic disable-next-line: unused-local
 	on_open = function(buf, chan) end,
+	---@diagnostic disable-next-line: unused-local
+	on_exit = function(buf) end,
 	auto_startinsert = true,
 }
 
@@ -273,11 +276,13 @@ end
 
 ---Open terminal buffer more intelligently
 ---@param buf number
+---@param win_config vim.api.keyset.win_config?
 ---@return number? -- window id
-function H.open_buf(buf)
+function H.open_buf(buf, win_config)
 	if not H.is_term(buf) then
 		return
 	end
+	H.windata[buf] = win_config or H.windata[buf]
 	local win = nil
 	if H.windata[buf] then
 		local wins = H.buf_get_win(buf)
@@ -350,6 +355,7 @@ function H.setup_autocmds()
 			if H.prevbuf == ev.buf then
 				H.prevbuf = H.list_termbufs()[1]
 			end
+			M.config.on_exit(ev.buf, vim.v.event.status)
 		end,
 	})
 	local sus_buf = 0
@@ -391,8 +397,10 @@ function M.close(buf)
 		return
 	end
 	local wins = H.buf_get_win(buf)
-	if H.windata[buf] and wins[1] then
-		api.nvim_win_close(wins[1], true)
+	if H.windata[buf] and #wins > 0 then
+		for _, win in ipairs(wins) do
+			api.nvim_win_close(win, true)
+		end
 	end
 	api.nvim_buf_delete(buf, { force = true })
 end
@@ -400,15 +408,18 @@ end
 ---Hide the terminal
 ---@param buf number?
 function M.hide(buf)
-	buf = buf or api.nvim_get_current_buf()
+	local current_buf = api.nvim_get_current_buf()
+	buf = buf or current_buf
 	if not H.is_term(buf) then
 		return
 	end
 	vim.bo[buf].buflisted = false
 	local wins = H.buf_get_win(buf)
-	if H.windata[buf] and wins[1] then
-		api.nvim_win_close(wins[1], true)
-	else
+	if H.windata[buf] and #wins > 0 then
+		for _, win in ipairs(wins) do
+			api.nvim_win_close(win, true)
+		end
+	elseif buf == current_buf then
 		vim.cmd('bnext')
 	end
 end
@@ -423,14 +434,13 @@ function M.open(win_config, opts)
 	end
 
 	if opts.buf and H.is_term(opts.buf) then
-		H.windata[opts.buf] = win_config or H.windata[opts.buf]
-		return { buf = opts.buf, win = H.open_buf(opts.buf) }
+		return { buf = opts.buf, win = H.open_buf(opts.buf, win_config) }
 	end
 
 	if opts.shell and vim.fn.executable(opts.shell) ~= 1 then
-		opts.shell = nil
 		vim.notify('Invalid shell "' .. opts.shell .. '"', vim.log.levels.ERROR)
 		vim.notify('The terminal will use the default shell.')
+		opts.shell = nil
 	end
 
 	local data = {}
@@ -514,6 +524,27 @@ function M.select(behavior, ui_select)
 	end)
 end
 
+---Similar to the `tabonly` command, which has two different behaviors.
+---@param behavior 'hide'|'close'?
+---@param buf number?
+function M.termonly(behavior, buf)
+	local termbufs = H.list_termbufs()
+	buf = buf or api.nvim_get_current_buf()
+	if not next(termbufs) or not H.is_term(buf) then
+		return
+	end
+	behavior = behavior or 'hide'
+	for _, bufnr in ipairs(termbufs) do
+		if bufnr ~= buf then
+			if behavior == 'close' then
+				M.close(bufnr)
+			else
+				M.hide(bufnr)
+			end
+		end
+	end
+end
+
 ---Open multiple terminal windows at the same time.
 ---@param count number|false? >1
 ---@param cycle string[]|vim.api.keyset.win_config[]?
@@ -552,6 +583,9 @@ end
 function M.focus(direction, count)
 	count = count or vim.v.count1
 	local termwins = H.list_termwins()
+	if not next(termwins) then
+		return
+	end
 	local current_win, current_idx = api.nvim_get_current_win(), 0
 
 	for idx, win in ipairs(termwins) do
