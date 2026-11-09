@@ -525,7 +525,7 @@ function M.select(behavior, ui_select)
 end
 
 ---Similar to the `tabonly` command, which has two different behaviors.
----@param behavior 'hide'|'close'?
+---@param behavior 'hide'|'close'? Be careful when using 'close'.
 ---@param buf number?
 function M.termonly(behavior, buf)
 	local termbufs = H.list_termbufs()
