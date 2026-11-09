@@ -130,7 +130,7 @@ terminil.setup({
 ### Open multiple windows at the same time
 
 ```lua
-terminil.open_multiple(3)
+terminil.open_multiple(count?, cycle?, opts?)
 ```
 
 Split according to your style, and it will repeat your configuration in cycles.
@@ -155,8 +155,8 @@ terminil.focus(1)   -- Jump to the next terminal window
 Use indexes for control
 
 ```lua
-terminil.switch_in_order(idx: number?)
-terminil.open_in_order(idx: number?)
+terminil.switch_in_order(idx?: number)
+terminil.open_in_order(idx?: number)
 
 -- For example: If you hide a window or terminal and it has the number 1
 -- then you press the key combination `1<leader>tt` and it will open the terminal.
@@ -166,8 +166,8 @@ vim.keymap.set('n', '<leader>tt', terminil.open_in_order)
 ### Hide and close the terminal
 
 ```lua
-terminil.hide(buf: number?)
-terminil.close(buf: number?)
+terminil.hide(buf?: number)
+terminil.close(buf?: number)
 ```
 
 ### Toggle terminal
@@ -186,5 +186,5 @@ terminil.toggle_buf(buf: number)    -- Toggle terminal buf
 
 ```lua
 -- You can use a different vim.ui.select() function via `ui_select`
-terminil.select(behavior: 'open'|'switch'|'close'?, ui_select?)
+terminil.select(behavior?: 'open'|'switch'|'close', ui_select?)
 ```

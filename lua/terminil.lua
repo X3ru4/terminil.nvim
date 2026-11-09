@@ -487,13 +487,13 @@ end
 
 ---Open multiple terminal windows at the same time.
 ---@param count number|false? >1
----@param cycles string[]|vim.api.keyset.win_config[]?
+---@param cycle string[]|vim.api.keyset.win_config[]?
 ---@param opts terminil.open.opts?
-function M.open_multiple(count, cycles, opts)
+function M.open_multiple(count, cycle, opts)
 	count = count or vim.v.count1
 
 	local i_cycle = 1
-	if not cycles then
+	if not cycle then
 		local termwins = H.list_termwins()
 		if termwins[#termwins] then
 			local split = api.nvim_win_get_config(termwins[#termwins]).split
@@ -504,14 +504,14 @@ function M.open_multiple(count, cycles, opts)
 		end
 	end
 
-	cycles = cycles or {
+	cycle = cycle or {
 		H.default_split('horizontal'),
 		H.default_split('vertical'),
 	}
 
 	for i = i_cycle, count do
-		i_cycle = ((i - 1) % #cycles) + 1
-		local val = cycles[i_cycle]
+		i_cycle = ((i - 1) % #cycle) + 1
+		local val = cycle[i_cycle]
 		---@diagnostic disable-next-line: param-type-mismatch
 		M.open(type(val) == 'string' and { split = val } or val, opts)
 	end
