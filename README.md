@@ -199,7 +199,7 @@ terminil.select(behavior?: 'open'|'switch'|'close', ui_select?)
   - `vim.g.tnil_keyprefix_n + s`
     - Open a window using `vim.ui.select` and select a terminal
     - It uses a count prefix to select behavior in a specific order. Default: `open`
-      1. `open`
-      2. `switch`
-      3. `close`
+      - 1 `open`
+      - 2 `switch`
+      - 3 `close`
     - Ex: `2<key>` to use the `switch` behavior
