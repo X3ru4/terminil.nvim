@@ -3,16 +3,16 @@
 ---@field keys [string, table|terminil.keyset|vim.keymap.set.Opts|false]?
 ---@field win_config vim.api.keyset.win_config? Default configuration for terminal windows when using the `M.open()` function.
 ---@field term_opts terminil.open.opts? Default terminal options
----@field on_open fun(buf: number, chan: number)?
----@field on_exit fun(buf: number, exitcode: number)?
+---@field on_open fun(buf: integer, chan: integer)?
+---@field on_exit fun(buf: integer, exitcode: integer)?
 ---@field auto_startinsert boolean?
 
 ---@class terminil.open.opts
 ---@field cmd string|string[]?
 ---@field default boolean? If set to `true`, it will use the default window configuration from `M.config.win_config`, and vice versa.
 ---@field shell string?
----@field buf number?
----@field buf_call fun(buf: number)? This function will be called within the `nvim_buf_call` function.
+---@field buf integer?
+---@field buf_call fun(buf: integer)? This function will be called within the `nvim_buf_call` function.
 
 ---@alias terminil.keyset {
 ---		[1]: string|function,
@@ -27,193 +27,32 @@ H.windata = {}
 H.prevbuf = 0
 
 local api = vim.api
-local keyprefix = {
-	t = vim.g.tnil_keyprefix_t or '<C-t>',
-	n = vim.g.tnil_keyprefix_n or '<leader>t',
-}
 
 ---Default configuration
 ---@type terminil.opts
 M.config = {
 	use_default_keys = true,
 	keys = {
-		[keyprefix.t .. 't'] = { '<cmd>stopinsert<cr>', desc = 'Stop insert in terminal mode' },
-		[keyprefix.t .. 'h'] = {
+		['<C-t>t'] = { '<cmd>stopinsert<cr>', desc = 'Stop insert in terminal mode' },
+		['<C-t>o'] = {
 			function()
-				M.hide()
+				M.termonly()
 			end,
-			desc = 'Hide the terminal',
+			desc = 'Hide all terminals except the current one',
 		},
-		[keyprefix.t .. 'j'] = {
+		['<M-/>'] = {
 			function()
-				M.focus(-1)
-			end,
-			desc = 'Previous terminal window',
-		},
-		[keyprefix.t .. 'k'] = {
-			function()
-				M.focus(1)
-			end,
-			desc = 'Next terminal window',
-		},
-		[keyprefix.t .. 'd'] = {
-			function()
-				M.close()
-			end,
-			desc = 'Close the terminal',
-		},
-		[keyprefix.t .. 'm'] = {
-			function()
-				M.open_multiple()
-			end,
-			desc = 'Open multiple terminal',
-		},
-		[keyprefix.t .. 'n'] = {
-			function()
-				vim.ui.input({ prompt = 'New name: ' }, function(input)
-					if not input then
-						return
-					end
-					api.nvim_buf_set_name(0, input)
-				end)
-			end,
-			desc = 'Remame the terminal',
-		},
-		[keyprefix.t .. 'w'] = {
-			function()
-				M.switch(-1)
-			end,
-			desc = 'Switch to previous terminal',
-		},
-		[keyprefix.t .. 'e'] = {
-			function()
-				M.switch(1)
-			end,
-			desc = 'Switch to next terminal',
-		},
-		[keyprefix.n .. 'n'] = {
-			function()
-				vim.ui.input({ prompt = 'New name: ' }, function(input)
-					if not input then
-						return
-					end
-					api.nvim_buf_set_name(0, input)
-				end)
-			end,
-			mode = 'n',
-			desc = 'Remame the terminal',
-		},
-		[keyprefix.n .. 'm'] = {
-			function()
-				M.open_multiple()
-			end,
-			mode = 'n',
-			desc = 'Open multiple terminal',
-		},
-		[keyprefix.n .. 't'] = {
-			function()
-				if vim.v.count > 0 then
-					M.open_in_order()
+				if not vim.t.tnil_togglebuf or not H.is_term(vim.t.tnil_togglebuf) then
+					local data = M.open({
+						split = 'below',
+					})
+					vim.t.tnil_togglebuf = data.buf
 				else
-					M.open()
+					M.toggle_buf(vim.t.tnil_togglebuf)
 				end
 			end,
-			mode = 'n',
-			desc = 'Open new terminal',
-		},
-		[keyprefix.n .. 'h'] = {
-			function()
-				M.open({ split = vim.o.splitbelow and 'below' or 'above' })
-			end,
-			mode = 'n',
-			desc = 'Open new split terminal',
-		},
-		[keyprefix.n .. 'v'] = {
-			function()
-				M.open({ split = vim.o.splitright and 'right' or 'left' })
-			end,
-			mode = 'n',
-			desc = 'Open new vsplit terminal',
-		},
-		[keyprefix.n .. 'f'] = {
-			function()
-				local width = H.size('width', 0.7)
-				local height = H.size('height', 0.6)
-				M.open({
-					relative = 'editor',
-					title = ' >_ Terminal ',
-					title_pos = 'center',
-					width = width,
-					height = height,
-					row = math.ceil((vim.o.lines - height) / 2) - 2,
-					col = math.ceil((vim.o.columns - width) / 2),
-				})
-			end,
-			mode = 'n',
-			desc = 'Open new float terminal',
-		},
-		[keyprefix.n .. 's'] = {
-			function()
-				local behaviors = {
-					'open',
-					'switch',
-					'close',
-				}
-				M.select(behaviors[vim.v.count1] or 'open')
-			end,
-			mode = 'n',
-			desc = 'Select terminal',
-		},
-		[keyprefix.n .. 'j'] = {
-			function()
-				M.focus(-1)
-			end,
-			mode = 'n',
-			desc = 'Previous terminal window',
-		},
-		[keyprefix.n .. 'k'] = {
-			function()
-				M.focus(1)
-			end,
-			mode = 'n',
-			desc = 'Next terminal window',
-		},
-		[keyprefix.n .. 'd'] = {
-			function()
-				M.close()
-			end,
-			mode = 'n',
-			desc = 'Close the terminal',
-		},
-		[keyprefix.n .. 'y'] = {
-			function()
-				M.hide()
-			end,
-			mode = 'n',
-			desc = 'Hide the terminal',
-		},
-		[keyprefix.n .. 'g'] = {
-			function()
-				if vim.v.count > 0 then
-					M.switch_in_order()
-				end
-			end,
-			mode = 'n',
-			desc = 'Switch terminal',
-		},
-		[keyprefix.n .. 'w'] = {
-			function()
-				M.switch(-1)
-			end,
-			mode = 'n',
-			desc = 'Switch to previous terminal',
-		},
-		[keyprefix.n .. 'e'] = {
-			function()
-				M.switch(1)
-			end,
-			mode = 'n',
-			desc = 'Switch to next terminal',
+			mode = { 'n', 't' },
+			desc = 'Toggle below terminal',
 		},
 		['<A-_>'] = {
 			function()
@@ -275,9 +114,9 @@ function H.size(axis, percent)
 end
 
 ---Open terminal buffer more intelligently
----@param buf number
+---@param buf integer
 ---@param win_config vim.api.keyset.win_config?
----@return number? -- window id
+---@return integer? -- window id
 function H.open_buf(buf, win_config)
 	if not H.is_term(buf) then
 		return
@@ -300,6 +139,19 @@ function H.open_buf(buf, win_config)
 		api.nvim_set_current_buf(buf)
 	end
 	return win
+end
+
+---@param buf integer
+---@return integer|nil
+function H.get_index(buf)
+	if not H.is_term(buf) then
+		return
+	end
+	for idx, bufnr in ipairs(H.list_termbufs()) do
+		if bufnr == buf then
+			return idx
+		end
+	end
 end
 
 function H.list_termwins()
@@ -390,7 +242,7 @@ function H.setup_keys(keys)
 end
 
 ---Close the terminal
----@param buf number?
+---@param buf integer?
 function M.close(buf)
 	buf = buf or api.nvim_get_current_buf()
 	if not H.is_term(buf) then
@@ -406,7 +258,7 @@ function M.close(buf)
 end
 
 ---Hide the terminal
----@param buf number?
+---@param buf integer?
 function M.hide(buf)
 	local current_buf = api.nvim_get_current_buf()
 	buf = buf or current_buf
@@ -426,7 +278,7 @@ end
 
 ---@param win_config vim.api.keyset.win_config?
 ---@param opts terminil.open.opts?
----@return { buf: number, win: number? }
+---@return { buf: integer, win: integer? }
 function M.open(win_config, opts)
 	opts = vim.tbl_deep_extend('force', M.config.term_opts, opts or {})
 	if opts.default then
@@ -526,7 +378,7 @@ end
 
 ---Similar to the `tabonly` command, which has two different behaviors.
 ---@param behavior 'hide'|'close'? Be careful when using 'close'.
----@param buf number?
+---@param buf integer?
 function M.termonly(behavior, buf)
 	local termbufs = H.list_termbufs()
 	buf = buf or api.nvim_get_current_buf()
@@ -534,10 +386,16 @@ function M.termonly(behavior, buf)
 		return
 	end
 	behavior = behavior or 'hide'
+	local choice
+	if behavior == 'close' then
+		choice = vim.fn.confirm('Delete other terminals?', '&Yes\n&No', 1)
+	end
 	for _, bufnr in ipairs(termbufs) do
 		if bufnr ~= buf then
 			if behavior == 'close' then
-				M.close(bufnr)
+				if choice == 1 then
+					M.close(bufnr)
+				end
 			else
 				M.hide(bufnr)
 			end
@@ -546,7 +404,7 @@ function M.termonly(behavior, buf)
 end
 
 ---Open multiple terminal windows at the same time.
----@param count number|false? >1
+---@param count integer|false? >1
 ---@param cycle string[]|vim.api.keyset.win_config[]?
 ---@param opts terminil.open.opts?
 function M.open_multiple(count, cycle, opts)
@@ -579,7 +437,7 @@ end
 
 ---Focus on the terminal windows in order
 ---@param direction -1|1
----@param count number?
+---@param count integer?
 function M.focus(direction, count)
 	count = count or vim.v.count1
 	local termwins = H.list_termwins()
@@ -612,7 +470,7 @@ end
 local switch_echo
 ---Switch to a different terminal in the current window in order
 ---@param direction -1|1
----@param count number?
+---@param count integer?
 function M.switch(direction, count)
 	count = count or vim.v.count1
 	local termbufs = H.list_termbufs()
@@ -620,44 +478,43 @@ function M.switch(direction, count)
 		return
 	end
 	local current_buf = api.nvim_get_current_buf()
-	for i, buf in ipairs(termbufs) do
-		if buf == current_buf then
-			local next_idx
-			if direction < 0 then
-				local idx = i - count
-				if idx <= 0 then
-					next_idx = #termbufs + (idx % -#termbufs)
-				else
-					next_idx = idx
-				end
-			else
-				next_idx = (((i + count) - 1) % #termbufs) + 1
-			end
-
-			local next_buf = termbufs[next_idx]
-			local opening_wins = H.buf_get_win(next_buf)
-			H.windata[next_buf] = H.windata[current_buf]
-
-			if opening_wins[1] and opening_wins[1] ~= api.nvim_get_current_win() then
-				api.nvim_win_close(opening_wins[1], true)
-			end
-			api.nvim_win_set_buf(0, next_buf)
-
-			switch_echo = api.nvim_echo({
-				{ 'Terminal index: prev: ' },
-				{ tostring((((next_idx - 1) - 1) % #termbufs) + 1), 'Number' },
-				{ ' current: ' },
-				{ tostring(next_idx), 'Type' },
-				{ ' next: ' },
-				{ tostring((((next_idx + 1) - 1) % #termbufs) + 1), 'Number' },
-			}, false, { id = switch_echo })
-			break
-		end
+	local current_idx = H.get_index(current_buf)
+	if not current_idx then
+		return
 	end
+	local next_idx
+	if direction < 0 then
+		local idx = current_idx - count
+		if idx <= 0 then
+			next_idx = #termbufs + (idx % -#termbufs)
+		else
+			next_idx = idx
+		end
+	else
+		next_idx = (((current_idx + count) - 1) % #termbufs) + 1
+	end
+
+	local next_buf = termbufs[next_idx]
+	local opening_wins = H.buf_get_win(next_buf)
+	H.windata[next_buf] = H.windata[current_buf]
+
+	if opening_wins[1] and opening_wins[1] ~= api.nvim_get_current_win() then
+		api.nvim_win_close(opening_wins[1], true)
+	end
+	api.nvim_win_set_buf(0, next_buf)
+
+	switch_echo = api.nvim_echo({
+		{ 'Terminal index: prev: ' },
+		{ tostring((((next_idx - 1) - 1) % #termbufs) + 1), 'Number' },
+		{ ' current: ' },
+		{ tostring(next_idx), 'Type' },
+		{ ' next: ' },
+		{ tostring((((next_idx + 1) - 1) % #termbufs) + 1), 'Number' },
+	}, false, { id = switch_echo })
 end
 
 ---Similar to the `M.switch` function, but with the index you want
----@param idx number? > 0
+---@param idx integer? > 0
 function M.switch_in_order(idx)
 	local count = idx or vim.v.count
 	if count < 1 then
@@ -674,7 +531,7 @@ function M.switch_in_order(idx)
 end
 
 ---Similar to the `H.open_buf` function, but with the index you want
----@param idx number? > 0
+---@param idx integer? > 0
 function M.open_in_order(idx)
 	local count = idx or vim.v.count
 	if count < 1 then
@@ -686,7 +543,7 @@ function M.open_in_order(idx)
 	end
 end
 
----@param buf number
+---@param buf integer
 function M.toggle_buf(buf)
 	if not H.is_term(buf) then
 		return
@@ -705,14 +562,14 @@ function M.toggle(behavior)
 		M.toggle_buf(H.prevbuf)
 	else
 		local buf = api.nvim_get_current_buf()
-		if not H.is_term(buf) and not vim.t.tnil_togglebuf then
+		if not H.is_term(buf) and not vim.t.tnil_toggle_current_buf then
 			return
 		end
-		if H.is_term(buf) and vim.t.tnil_togglebuf and buf ~= H.prevbuf then
-			vim.t.tnil_togglebuf = buf
+		if H.is_term(buf) and vim.t.tnil_toggle_current_buf and buf ~= H.prevbuf then
+			vim.t.tnil_toggle_current_buf = buf
 		end
-		vim.t.tnil_togglebuf = vim.t.tnil_togglebuf or buf
-		M.toggle_buf(vim.t.tnil_togglebuf)
+		vim.t.tnil_toggle_current_buf = vim.t.tnil_toggle_current_buf or buf
+		M.toggle_buf(vim.t.tnil_toggle_current_buf)
 	end
 end
 

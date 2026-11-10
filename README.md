@@ -11,7 +11,6 @@ _A simple plugin that makes interacting with the terminal easier._
 - **Floating terminal window**
 - **Highly customizable**
 - **Toggle the terminal**
-- **Rename the terminal**
 - _etc_.
 
 ## Installation
@@ -22,11 +21,6 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim)
 return {
     'X3ru4/terminil.nvim',
     event = 'VeryLazy',
-    init = function()
-        -- Change the prefix of the default keymaps.
-        vim.g.tnil_keyprefix_n = 'gt'    -- For normal mode   Default: '<leader>t'
-        vim.g.tnil_keyprefix_t = '<C-t>' -- For terminal mode Default: '<C-t>'
-    end,
     ---@module 'terminil'
     ---@type terminil.opts
     opts = {},
@@ -37,15 +31,12 @@ With vim.pack
 
 ```lua
 vim.pack.add({ 'https://github.com/X3ru4/terminil.nvim' })
--- Change the prefix of the default keymaps.
-vim.g.tnil_keyprefix_n = 'gt'    -- For normal mode   Default: '<leader>t'
-vim.g.tnil_keyprefix_t = '<C-t>' -- For terminal mode Default: '<C-t>'
 require('terminil').setup()
 ```
 
 ## Configuration
 
-[Default configuration](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L37-L240)
+[Default configuration](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L33-L79)
 
 ## Docs
 
@@ -102,9 +93,7 @@ local buf = nil
 terminil.setup({
     keys = {
         -- Set it to false to disable keymap
-        [vim.g.tnil_keyprefix_n .. 'f'] = false,
-        [vim.g.tnil_keyprefix_n .. 'h'] = false,
-        [vim.g.tnil_keyprefix_n .. 'v'] = false,
+        ['<C-t>t'] = false,
         -- Create your own keymaps. See: vim.keymap.set()
         ['<M-/>'] = {
             function() -- rhs
@@ -152,12 +141,6 @@ terminil.focus(-1)  -- Jump to the previous terminal window
 terminil.focus(1)   -- Jump to the next terminal window
 ```
 
-- Default keymaps
-  - `vim.g.tnil_keyprefix_t + e` Switch to the next terminal
-  - `vim.g.tnil_keyprefix_n + e` Switch to the next terminal
-  - `vim.g.tnil_keyprefix_t + w` Switch to the previous terminal
-  - `vim.g.tnil_keyprefix_n + w` Switch to the previous terminal
-
 Use indexes for control
 
 ```lua
@@ -200,14 +183,6 @@ terminil.toggle_buf(buf: number)    -- Toggle terminal buf
 -- |'close'  Close the selected terminal.
 terminil.select(behavior?: 'open'|'switch'|'close', ui_select?)
 ```
-
-- Default keymaps
-  - `vim.g.tnil_keyprefix_n + s`
-    - It uses a count prefix to select behavior in a specific order. Default: `open`
-      - 1 `open`
-      - 2 `switch`
-      - 3 `close`
-    - Ex: `2<key>` to use the `switch` behavior
 
 ### termonly(...)
 
