@@ -144,8 +144,8 @@ terminil.focus(1)   -- Jump to the next terminal window
 Use indexes for control
 
 ```lua
-terminil.switch_in_order(idx?: number)
-terminil.open_in_order(idx?: number)
+terminil.switch_in_order(idx?: integer)
+terminil.open_in_order(idx?: integer)
 
 -- For example: If you hide a window or terminal and it has the number 1
 -- then you press the key combination `1<leader>tt` and it will open the terminal.
@@ -155,8 +155,8 @@ vim.keymap.set('n', '<leader>tt', terminil.open_in_order)
 ### Hide and close the terminal
 
 ```lua
-terminil.hide(buf?: number)
-terminil.close(buf?: number)
+terminil.hide(buf?: integer)
+terminil.close(buf?: integer)
 ```
 
 ### Toggle terminal
@@ -164,7 +164,7 @@ terminil.close(buf?: number)
 ```lua
 terminil.toggle('current')  -- Toggle current terminal
 terminil.toggle('previous') -- Toggle previous terminal
-terminil.toggle_buf(buf: number)    -- Toggle terminal buf
+terminil.toggle_buf(buf: integer)    -- Toggle terminal buf
 ```
 
 - Default keymaps
@@ -191,5 +191,5 @@ Similar to the `tabonly` command. See `:tabonly`
 ```lua
 -- `behavior` default is 'hide'. Be careful when using 'close'.
 -- 'buf'      default is current buffer
-terminil.termonly(behavior?: 'close'|'hide', buf?: number)
+terminil.termonly(behavior?: 'close'|'hide', buf?: integer)
 ```
