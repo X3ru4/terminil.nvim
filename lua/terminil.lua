@@ -43,8 +43,16 @@ M.config = {
 		['<M-/>'] = {
 			function()
 				if not vim.t.tnil_togglebuf or not H.is_term(vim.t.tnil_togglebuf) then
+					local width, height = H.size('width', 0.7), H.size('height', 0.6)
 					local data = M.open({
-						split = 'below',
+						relative = 'editor',
+						title = ' >_ Terminal ',
+						title_pos = 'center',
+						width = width,
+						height = height,
+						-- Center the floating window.
+						row = math.ceil((vim.o.lines - height) / 2) - 2,
+						col = math.ceil((vim.o.columns - width) / 2),
 					})
 					vim.t.tnil_togglebuf = data.buf
 				else
@@ -52,7 +60,7 @@ M.config = {
 				end
 			end,
 			mode = { 'n', 't' },
-			desc = 'Toggle below terminal',
+			desc = 'Toggle float terminal',
 		},
 		['<A-_>'] = {
 			function()
@@ -92,11 +100,15 @@ end
 local exclude_ft = {
 	fzf = true,
 }
+---Returns true if the buffer is a terminal, otherwise false.
+---@param buf integer
+---@return boolean
 function H.is_term(buf)
 	return api.nvim_buf_is_valid(buf) and vim.bo[buf].buftype == 'terminal' and not exclude_ft[vim.bo[buf].filetype]
 end
 
 ---@param split 'horizontal'|'vertical'
+---@return 'below'|'above'|'right'|'left'|string
 function H.default_split(split)
 	local splits = {
 		horizontal = vim.o.splitbelow and 'below' or 'above',
@@ -154,26 +166,29 @@ function H.get_index(buf)
 	end
 end
 
+---Returns a list of currently open terminal windows.
+---@return integer[]
 function H.list_termwins()
 	return vim.tbl_filter(function(win)
 		return H.is_term(api.nvim_win_get_buf(win))
 	end, api.nvim_tabpage_list_wins(0))
 end
 
+---Returns a list of terminal buffers.
+---@return integer[]
 function H.list_termbufs()
 	return vim.tbl_filter(function(buf)
 		return H.is_term(buf)
 	end, api.nvim_list_bufs())
 end
 
+---Returns a list containing the windows that are currently open in a buffer on a given tab page.
+---@param buf integer
+---@return integer[]
 function H.buf_get_win(buf)
 	return vim.tbl_filter(function(win)
 		return api.nvim_win_get_buf(win) == buf
 	end, api.nvim_tabpage_list_wins(0))
-end
-
-function H.is_termwin(win)
-	return vim.tbl_contains(H.list_termwins(), win)
 end
 
 function H.setup_autocmds()
@@ -183,20 +198,27 @@ function H.setup_autocmds()
 	autocmd('TermOpen', {
 		group = augroup,
 		callback = function(ev)
-			if M.config.auto_startinsert then
-				vim.cmd.startinsert()
-			end
+			vim.schedule(function()
+				if M.config.auto_startinsert and api.nvim_get_current_buf() == ev.buf then
+					vim.cmd.startinsert()
+				end
+			end)
+
 			M.config.on_open(ev.buf, vim.bo[ev.buf].channel)
+
 			if H.windata[ev.buf] then
 				return
 			end
+
 			local wins = api.nvim_tabpage_list_wins(0)
 			local normal_wins = vim.tbl_filter(function(win)
 				return api.nvim_win_get_config(win).relative == ''
 			end, wins)
+
 			if #normal_wins == 1 then
 				return
 			end
+
 			H.windata[ev.buf] = api.nvim_win_get_config(0)
 		end,
 	})
@@ -220,12 +242,6 @@ function H.setup_autocmds()
 			if H.is_term(ev.buf) then
 				sus_buf = ev.buf
 			end
-		end,
-	})
-	autocmd('TabClosedPre', {
-		group = augroup,
-		callback = function()
-			vim.t.tnil_togglebuf = nil
 		end,
 	})
 end
@@ -267,12 +283,12 @@ function M.hide(buf)
 	end
 	vim.bo[buf].buflisted = false
 	local wins = H.buf_get_win(buf)
-	if H.windata[buf] and #wins > 0 then
+	if #wins > 0 and H.windata[buf] then
 		for _, win in ipairs(wins) do
 			api.nvim_win_close(win, true)
 		end
 	elseif buf == current_buf then
-		vim.cmd('bnext')
+		vim.cmd('buffer #')
 	end
 end
 
@@ -334,6 +350,7 @@ function M.open(win_config, opts)
 	return data
 end
 
+---List all terminal buffers using the `vim.ui.select` or `ui_select` function.
 ---@generic T
 ---@param behavior 'open'|'switch'|'close'?
 ---@param ui_select fun(items: T[], opts: vim.ui.select.Opts, on_choice: fun(item: T|nil, idx: integer|nil))? Use this to replace the `vim.ui.select` function if you want to use a different function.
@@ -354,7 +371,7 @@ function M.select(behavior, ui_select)
 	local opts = {
 		prompt = 'Select terminal: ',
 		format_item = function(item)
-			return item.index .. ' ' .. item.name
+			return ('%d %s %d'):format(item.index, item.name, item.bufnr)
 		end,
 	}
 	(ui_select or vim.ui.select)(termbufs, opts, function(item, _)
@@ -400,6 +417,31 @@ function M.termonly(behavior, buf)
 				M.hide(bufnr)
 			end
 		end
+	end
+end
+
+---Add terminals by number
+---It's very useful if you don't want to work across multiple windows.
+---@param count integer? Number of buffers to add. Default uses vim.v.count1
+---@param open boolean? If true, the last added buffer will be automatically opened, and vice versa
+function M.add(count, open)
+	count = count or vim.v.count1
+	local current_buf = api.nvim_get_current_buf()
+	local is_term = H.is_term(current_buf)
+	local win_config = H.windata[current_buf]
+	for _ = 1, count do
+		local buf = api.nvim_create_buf(false, true)
+		api.nvim_buf_call(buf, function()
+			vim.cmd.terminal()
+			vim.bo[buf].buflisted = false
+		end)
+		api.nvim_set_current_buf(buf)
+		if is_term then
+			H.windata[buf] = win_config
+		end
+	end
+	if not open then
+		api.nvim_set_current_buf(current_buf)
 	end
 end
 
@@ -527,6 +569,7 @@ function M.switch_in_order(idx)
 			api.nvim_win_close(opening_wins[1], true)
 		end
 		api.nvim_win_set_buf(0, buf)
+		H.windata[buf] = nil
 	end
 end
 
