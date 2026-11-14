@@ -244,6 +244,15 @@ function H.setup_autocmds()
 			end
 			if H.is_term(ev.buf) then
 				sus_buf = ev.buf
+				if vim.b.tnil_is_scratch then
+					vim.opt_local.list = false
+					vim.opt_local.wrap = false
+					vim.opt_local.number = false
+					vim.opt_local.relativenumber = false
+					vim.opt_local.signcolumn = 'no'
+					vim.opt_local.foldcolumn = '0'
+					vim.b.tnil_is_scratch = false
+				end
 			end
 		end,
 	})
@@ -342,9 +351,9 @@ function M.open(win_config, opts)
 			H.windata[bufnr] = win_config
 			api.nvim_buf_call(bufnr, function()
 				vim.cmd.terminal(opts.shell)
-				vim.bo[bufnr].buflisted = false
+				vim.bo.buflisted = false
 				if opts.cmd then
-					api.nvim_chan_send(vim.bo[bufnr].channel, H.cmd_to_str(opts.cmd))
+					api.nvim_chan_send(vim.bo.channel, H.cmd_to_str(opts.cmd))
 				end
 				if opts.buf_call then
 					opts.buf_call(bufnr)
@@ -441,19 +450,19 @@ function M.add(count, open)
 	local current_buf = api.nvim_get_current_buf()
 	local is_term = H.is_term(current_buf)
 	local win_config = H.windata[current_buf]
-	for _ = 1, count do
+	for i = 1, count do
 		local buf = api.nvim_create_buf(false, true)
 		api.nvim_buf_call(buf, function()
 			vim.cmd.terminal()
-			vim.bo[buf].buflisted = false
+			vim.bo.buflisted = false
+			vim.b.tnil_is_scratch = true
 		end)
-		api.nvim_set_current_buf(buf)
 		if is_term then
 			H.windata[buf] = win_config
 		end
-	end
-	if not open then
-		api.nvim_set_current_buf(current_buf)
+		if open and i == count then
+			api.nvim_set_current_buf(buf)
+		end
 	end
 end
 
