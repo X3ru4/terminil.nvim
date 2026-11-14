@@ -268,9 +268,13 @@ function M.close(buf)
 		return
 	end
 	local wins = H.buf_get_win(buf)
-	if H.windata[buf] and #wins > 0 then
+	if #wins > 0 and H.windata[buf] then
 		for _, win in ipairs(wins) do
-			api.nvim_win_close(win, true)
+			local normal_wins = H.list_normal_win()
+			if #normal_wins == 1 and normal_wins[1] == win then
+			else
+				api.nvim_win_close(win, true)
+			end
 		end
 	end
 	api.nvim_buf_delete(buf, { force = true })
