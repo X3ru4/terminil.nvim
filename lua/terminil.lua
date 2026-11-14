@@ -467,6 +467,7 @@ end
 ---@param opts terminil.open.opts?
 function M.open_multiple(count, cycle, opts)
 	count = count or vim.v.count1
+  cycle = (cycle and not next(cycle)) and nil or cycle
 
 	local i_cycle = 1
 	if not cycle then
