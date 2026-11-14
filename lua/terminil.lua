@@ -182,6 +182,14 @@ function H.list_termbufs()
 	end, api.nvim_list_bufs())
 end
 
+---Returns a list of normal windows.
+---@return integer[]
+function H.list_normal_win()
+	return vim.tbl_filter(function(win)
+		return api.nvim_win_get_config(win).relative == ''
+	end, api.nvim_tabpage_list_wins(1))
+end
+
 ---Returns a list containing the windows that are currently open in a buffer on a given tab page.
 ---@param buf integer
 ---@return integer[]
@@ -210,12 +218,7 @@ function H.setup_autocmds()
 				return
 			end
 
-			local wins = api.nvim_tabpage_list_wins(0)
-			local normal_wins = vim.tbl_filter(function(win)
-				return api.nvim_win_get_config(win).relative == ''
-			end, wins)
-
-			if #normal_wins == 1 then
+			if #H.list_normal_win() == 1 then
 				return
 			end
 
@@ -285,10 +288,15 @@ function M.hide(buf)
 	local wins = H.buf_get_win(buf)
 	if #wins > 0 and H.windata[buf] then
 		for _, win in ipairs(wins) do
-			api.nvim_win_close(win, true)
+			local normal_wins = H.list_normal_win()
+			if #normal_wins == 1 and normal_wins[1] == win then
+				vim.cmd.buffer('#')
+			else
+				api.nvim_win_close(win, true)
+			end
 		end
 	elseif buf == current_buf then
-		vim.cmd('buffer #')
+		vim.cmd.buffer('#')
 	end
 end
 
@@ -569,7 +577,6 @@ function M.switch_in_order(idx)
 			api.nvim_win_close(opening_wins[1], true)
 		end
 		api.nvim_win_set_buf(0, buf)
-		H.windata[buf] = nil
 	end
 end
 
