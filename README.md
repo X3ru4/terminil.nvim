@@ -36,7 +36,7 @@ require('terminil').setup()
 
 ## Configuration
 
-[Default configuration](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L33-L79)
+[Default configuration](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L33-L87)
 
 ## Docs
 
@@ -126,6 +126,20 @@ Split according to your style, and it will repeat your configuration in cycles.
 
 ```lua
 terminil.open_multiple(5, { 'above', { split = 'left', width = 10 }, 'right' })
+```
+
+### Add more terminals
+
+```lua
+terminil.add(count?: integer, open?: boolean)
+
+terminil.add(3)
+```
+
+By default, `count` will use the variable vim.v.count1 as the default.
+
+```lua
+terminil.add()
 ```
 
 ### Switch between terminals and move to different windows
