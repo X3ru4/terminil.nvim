@@ -100,13 +100,13 @@ end
 local exclude_ft = {
 	fzf = true,
 }
----Returns true if the buffer is a terminal, otherwise false.
 ---@param buf integer
----@return boolean
+---@return boolean : Returns true if the buffer is a terminal, otherwise false
 function H.is_term(buf)
 	return api.nvim_buf_is_valid(buf) and vim.bo[buf].buftype == 'terminal' and not exclude_ft[vim.bo[buf].filetype]
 end
 
+---Get the default split
 ---@param split 'horizontal'|'vertical'
 ---@return 'below'|'above'|'right'|'left'|string
 function H.default_split(split)
@@ -153,6 +153,7 @@ function H.open_buf(buf, win_config)
 	return win
 end
 
+---Get the index of the buffer in the terminal buffer list.
 ---@param buf integer
 ---@return integer|nil
 function H.get_index(buf)
@@ -166,32 +167,28 @@ function H.get_index(buf)
 	end
 end
 
----Returns a list of currently open terminal windows.
----@return integer[]
+---@return integer[] : Returns a list of currently open terminal windows
 function H.list_termwins()
 	return vim.tbl_filter(function(win)
 		return H.is_term(api.nvim_win_get_buf(win))
 	end, api.nvim_tabpage_list_wins(0))
 end
 
----Returns a list of terminal buffers.
----@return integer[]
+---@return integer[] : Returns a list of terminal buffers
 function H.list_termbufs()
 	return vim.tbl_filter(function(buf)
 		return H.is_term(buf)
 	end, api.nvim_list_bufs())
 end
 
----Returns a list of normal windows.
----@return integer[]
+---@return integer[] : Returns a list of normal windows
 function H.list_normal_win()
 	return vim.tbl_filter(function(win)
 		return api.nvim_win_get_config(win).relative == ''
 	end, api.nvim_tabpage_list_wins(0))
 end
 
----Returns a list containing the windows that are currently open in a buffer on a given tab page.
----@param buf integer
+---@param buf integer : Returns a list containing the windows that are currently open in a buffer on a given tab page
 ---@return integer[]
 function H.buf_get_win(buf)
 	return vim.tbl_filter(function(win)
@@ -258,12 +255,15 @@ function H.setup_autocmds()
 	})
 end
 
+---Set keymaps via the `keys` table.
+---@param keys [string, table|terminil.keyset|vim.keymap.set.Opts|false]
 function H.setup_keys(keys)
 	for key, value in pairs(vim.deepcopy(keys)) do
 		if value then
 			local mode = value.mode or 't'
 			local rhs = value[1]
 			value[1], value.mode = nil, nil
+			---@diagnostic disable-next-line: param-type-mismatch
 			vim.keymap.set(mode, key, rhs, value)
 		end
 	end
@@ -313,6 +313,7 @@ function M.hide(buf)
 	end
 end
 
+---Open the terminal using your own window configuration and other related options.
 ---@param win_config vim.api.keyset.win_config?
 ---@param opts terminil.open.opts?
 ---@return { buf: integer, win: integer? }
@@ -415,7 +416,7 @@ function M.select(behavior, ui_select)
 end
 
 ---Similar to the `tabonly` command, which has two different behaviors.
----@param behavior 'hide'|'close'? Be careful when using 'close'.
+---@param behavior 'hide'|'close'? Be careful when using 'close'
 ---@param buf integer?
 function M.termonly(behavior, buf)
 	local termbufs = H.list_termbufs()
@@ -606,6 +607,7 @@ function M.open_in_order(idx)
 	end
 end
 
+---Toggle any terminal buffer
 ---@param buf integer
 function M.toggle_buf(buf)
 	if not H.is_term(buf) then
@@ -618,7 +620,8 @@ function M.toggle_buf(buf)
 	H.open_buf(buf)
 end
 
----@param behavior 'current'|'previous'?
+---Similar to `M.toggle_buf` but with two different behaviors.
+---@param behavior 'current'|'previous'? 'current' toggle terminal buffer is currently open.The 'previous' toggle terminal was previously opened
 function M.toggle(behavior)
 	behavior = behavior or 'current'
 	if behavior == 'previous' then
@@ -636,6 +639,7 @@ function M.toggle(behavior)
 	end
 end
 
+---Setup terminil.nvim
 ---@param opts terminil.opts?
 function M.setup(opts)
 	M.config = vim.tbl_deep_extend('force', M.config, opts or {})
