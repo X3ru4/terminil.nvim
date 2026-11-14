@@ -198,7 +198,7 @@ terminil.toggle_buf(buf: integer)    -- Toggle terminal buf
 terminil.select(behavior?: 'open'|'switch'|'close', ui_select?)
 ```
 
-### termonly(...)
+### Termonly
 
 Similar to the `tabonly` command. See `:tabonly`
 
