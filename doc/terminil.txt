@@ -1,0 +1,220 @@
+Class ~
+{terminil.opts}
+Fields ~
+{use_default_keys} `(boolean?)`
+{keys} `([string, table|terminil.keyset|vim.keymap.set.Opts|false]?)`
+{win_config} `(vim.api.keyset.win_config?)` Default configuration for terminal windows when using the `M.open()` function.
+{term_opts} `(terminil.open.opts?)` Default terminal options
+{on_open} `(fun(buf: integer, chan: integer)?)`
+{on_exit} `(fun(buf: integer, exitcode: integer)?)`
+{auto_startinsert} `(boolean?)`
+
+------------------------------------------------------------------------------
+Class ~
+{terminil.open.opts}
+Fields ~
+{cmd} `(string|string[]?)`
+{default} `(boolean?)` If set to `true`, it will use the default window configuration from `M.config.win_config`, and vice versa.
+{shell} `(string?)`
+{buf} `(integer?)`
+{buf_call} `(fun(buf: integer)?)` This function will be called within the `nvim_buf_call` function.
+
+------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------
+                                                                      *M.config*
+                                   `M.config`
+configuration
+Type ~
+`(terminil.opts)`
+
+------------------------------------------------------------------------------
+                                                                *H.cmd_to_str()*
+                             `H.cmd_to_str`({cmd})
+Parameters ~
+{cmd} `(string|string[])`
+Return ~
+`(string)`
+
+------------------------------------------------------------------------------
+                                                                   *H.is_term()*
+                               `H.is_term`({buf})
+true if the buffer is a terminal, otherwise false.
+Parameters ~
+{buf} `(integer)`
+Return ~
+`(boolean)`
+
+------------------------------------------------------------------------------
+                                                             *H.default_split()*
+                           `H.default_split`({split})
+Parameters ~
+{split} '`(horizontal)`'|'vertical'
+Return ~
+'`(below)`'|'above'|'right'|'left'|string
+
+------------------------------------------------------------------------------
+                                                                      *H.size()*
+                          `H.size`({axis}, {percent})
+Parameters ~
+{axis} '`(height)`'|'width'
+{percent} `(number)` 0.0->1.0
+Return ~
+`(number)`
+
+------------------------------------------------------------------------------
+                                                                  *H.open_buf()*
+                       `H.open_buf`({buf}, {win_config})
+terminal buffer more intelligently
+Parameters ~
+{buf} `(integer)`
+{win_config} `(vim.api.keyset.win_config?)`
+Return ~
+`(integer)` `(optional)` -- window id
+
+------------------------------------------------------------------------------
+                                                                 *H.get_index()*
+                              `H.get_index`({buf})
+Parameters ~
+{buf} `(integer)`
+Return ~
+`(integer|nil)`
+
+------------------------------------------------------------------------------
+                                                             *H.list_termwins()*
+                              `H.list_termwins`()
+a list of currently open terminal windows.
+Return ~
+`(integer[])`
+
+------------------------------------------------------------------------------
+                                                             *H.list_termbufs()*
+                              `H.list_termbufs`()
+a list of terminal buffers.
+Return ~
+`(integer[])`
+
+------------------------------------------------------------------------------
+                                                           *H.list_normal_win()*
+                             `H.list_normal_win`()
+a list of normal windows.
+Return ~
+`(integer[])`
+
+------------------------------------------------------------------------------
+                                                               *H.buf_get_win()*
+                             `H.buf_get_win`({buf})
+a list containing the windows that are currently open in a buffer on a given tab page.
+Parameters ~
+{buf} `(integer)`
+Return ~
+`(integer[])`
+
+------------------------------------------------------------------------------
+                                                                     *M.close()*
+                                `M.close`({buf})
+the terminal
+Parameters ~
+{buf} `(integer?)`
+
+------------------------------------------------------------------------------
+                                                                      *M.hide()*
+                                `M.hide`({buf})
+the terminal
+Parameters ~
+{buf} `(integer?)`
+
+------------------------------------------------------------------------------
+                                                                      *M.open()*
+                         `M.open`({win_config}, {opts})
+Parameters ~
+{win_config} `(vim.api.keyset.win_config?)`
+{opts} `(terminil.open.opts?)`
+Return ~
+`({ buf: integer, win: integer? })`
+
+------------------------------------------------------------------------------
+                                                                    *M.select()*
+                      `M.select`({behavior}, {ui_select})
+all terminal buffers using the `vim.ui.select` or `ui_select` function.
+T
+Parameters ~
+{behavior} '`(open)`'|'switch'|'close'?
+{ui_select} `(fun(items: T[], opts: vim.ui.select.Opts, on_choice: fun(item: T|nil, idx: integer|nil))?)` Use this to replace the `vim.ui.select` function if you want to use a different function.
+
+------------------------------------------------------------------------------
+                                                                  *M.termonly()*
+                        `M.termonly`({behavior}, {buf})
+to the `tabonly` command, which has two different behaviors.
+Parameters ~
+{behavior} '`(hide)`'|'close'? Be careful when using 'close'.
+{buf} `(integer?)`
+
+------------------------------------------------------------------------------
+                                                                       *M.add()*
+                            `M.add`({count}, {open})
+terminals by number
+very useful if you don't want to work across multiple windows.
+Parameters ~
+{count} `(integer?)` Number of buffers to add. Default uses vim.v.count1
+{open} `(boolean?)` If true, the last added buffer will be automatically opened, and vice versa
+
+------------------------------------------------------------------------------
+                                                             *M.open_multiple()*
+                  `M.open_multiple`({count}, {cycle}, {opts})
+multiple terminal windows at the same time.
+Parameters ~
+{count} `(integer|false?)` >1
+{cycle} `(string[]|vim.api.keyset.win_config[]?)`
+{opts} `(terminil.open.opts?)`
+
+------------------------------------------------------------------------------
+                                                                     *M.focus()*
+                        `M.focus`({direction}, {count})
+on the terminal windows in order
+Parameters ~
+{direction} -1|1
+{count} `(integer?)`
+
+------------------------------------------------------------------------------
+                                                                    *M.switch()*
+                        `M.switch`({direction}, {count})
+to a different terminal in the current window in order
+Parameters ~
+{direction} -1|1
+{count} `(integer?)`
+
+------------------------------------------------------------------------------
+                                                           *M.switch_in_order()*
+                           `M.switch_in_order`({idx})
+to the `M.switch` function, but with the index you want
+Parameters ~
+{idx} `(integer?)` > 0
+
+------------------------------------------------------------------------------
+                                                             *M.open_in_order()*
+                            `M.open_in_order`({idx})
+to the `H.open_buf` function, but with the index you want
+Parameters ~
+{idx} `(integer?)` > 0
+
+------------------------------------------------------------------------------
+                                                                *M.toggle_buf()*
+                             `M.toggle_buf`({buf})
+Parameters ~
+{buf} `(integer)`
+
+------------------------------------------------------------------------------
+                                                                    *M.toggle()*
+                             `M.toggle`({behavior})
+Parameters ~
+{behavior} '`(current)`'|'previous'?
+
+------------------------------------------------------------------------------
+                                                                     *M.setup()*
+                               `M.setup`({opts})
+Parameters ~
+{opts} `(terminil.opts?)`
+
+
+ vim:tw=78:ts=8:noet:ft=help:norl:
