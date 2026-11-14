@@ -187,7 +187,7 @@ end
 function H.list_normal_win()
 	return vim.tbl_filter(function(win)
 		return api.nvim_win_get_config(win).relative == ''
-	end, api.nvim_tabpage_list_wins(1))
+	end, api.nvim_tabpage_list_wins(0))
 end
 
 ---Returns a list containing the windows that are currently open in a buffer on a given tab page.
