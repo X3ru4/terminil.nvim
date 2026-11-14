@@ -334,39 +334,33 @@ function M.open(win_config, opts)
 	end
 
 	local data = {}
-	local ok, err = pcall(function()
-		if not win_config then
+	if not win_config then
+		vim.cmd.terminal(opts.shell)
+		local bufnr = api.nvim_get_current_buf()
+		vim.bo[bufnr].buflisted = false
+		if opts.cmd then
+			api.nvim_chan_send(vim.bo[bufnr].channel, H.cmd_to_str(opts.cmd))
+		end
+		if opts.buf_call then
+			opts.buf_call(bufnr)
+		end
+		data.buf = bufnr
+		data.win = api.nvim_get_current_win()
+	else
+		local bufnr = api.nvim_create_buf(false, true)
+		H.windata[bufnr] = win_config
+		api.nvim_buf_call(bufnr, function()
 			vim.cmd.terminal(opts.shell)
-			local bufnr = api.nvim_get_current_buf()
-			vim.bo[bufnr].buflisted = false
+			vim.bo.buflisted = false
 			if opts.cmd then
-				api.nvim_chan_send(vim.bo[bufnr].channel, H.cmd_to_str(opts.cmd))
+				api.nvim_chan_send(vim.bo.channel, H.cmd_to_str(opts.cmd))
 			end
 			if opts.buf_call then
 				opts.buf_call(bufnr)
 			end
-			data.buf = bufnr
-			data.win = api.nvim_get_current_win()
-		else
-			local bufnr = api.nvim_create_buf(false, true)
-			H.windata[bufnr] = win_config
-			api.nvim_buf_call(bufnr, function()
-				vim.cmd.terminal(opts.shell)
-				vim.bo.buflisted = false
-				if opts.cmd then
-					api.nvim_chan_send(vim.bo.channel, H.cmd_to_str(opts.cmd))
-				end
-				if opts.buf_call then
-					opts.buf_call(bufnr)
-				end
-			end)
-			data.buf = bufnr
-			data.win = api.nvim_open_win(bufnr, true, win_config)
-		end
-	end)
-
-	if not ok and err then
-		vim.notify(err, vim.log.levels.ERROR)
+		end)
+		data.buf = bufnr
+		data.win = api.nvim_open_win(bufnr, true, win_config)
 	end
 
 	return data
@@ -468,7 +462,7 @@ function M.add(count, open)
 end
 
 ---Open multiple terminal windows at the same time.
----@param count integer|false? >1
+---@param count integer|false?
 ---@param cycle string[]|vim.api.keyset.win_config[]?
 ---@param opts terminil.open.opts?
 function M.open_multiple(count, cycle, opts)
