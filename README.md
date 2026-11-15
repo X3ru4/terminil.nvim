@@ -40,18 +40,7 @@ require('terminil').setup()
 
 ## Docs
 
-### APIS
-
-- M.open(win_config?: vim.api.keyset.win_config, opts?: terminil.open.opts)
-  -> { buf: integer, win: integer? }
-  - `opts` has the following options
-    - `cmd` string|string[]?
-    - `default` boolean? If set to `true`, it will use the default window
-      configuration from `M.config.win_config`, and vice versa
-    - `shell` string? Set the terminal shell
-    - `buf` integer?
-    - `buf_call` fun(buf: integer)? This function will be called within
-      the `nvim_buf_call` function
+### [APIs](https://github.com/X3ru4/terminil.nvim/blob/main/APIs.md)
 
 ### Terminal in floating window
 
