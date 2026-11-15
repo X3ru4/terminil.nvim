@@ -43,7 +43,7 @@ require('terminil') = {
 Create one or more different terminal buffers.
 It can inherit the configuration of the currently open terminal window.
 
-- Parameters
+- Parameters:
   - `count`: (integer?) Number of buffers to add. Default uses vim.v.count1.
   - `open`: (boolean?) If `true` it will open the last created buffer.
 
@@ -51,7 +51,7 @@ It can inherit the configuration of the currently open terminal window.
 
 Close the terminal
 
-- Parameters
+- Parameters:
   - `buf`: (integer?) The buffer ID of the terminal you want to close.
     The default will be the current buffer.
 
@@ -59,17 +59,65 @@ Close the terminal
 
 Focus on a terminal window in ascending or descending order
 
-- Parameters
+- Parameters:
   - `direction`: (-1|1) Let `1` be in ascending order and `-1` in descending order.
   - `count`: (integer?) Number of increases and decreases for each time.
 
 ### h.buf_get_wins({buf})
 
-- Parameters
+- Parameters:
   - `buf`: (integer) Buffer id
 
 - Return: (integer[]) Returns a list containing the windows that are
   currently open in a buffer on a given tab page
+
+### h.cmd_to_str({cmd})
+
+- Parameters:
+  - `cmd`: (string|string[]) Sigma command
+
+- Return: (string)
+
+### h.default_split({split})
+
+Get the default split
+
+- Parameters:
+  - `split`: ('horizontal'|'vertical') Split direction
+    ''
+
+- Return: ('below'|'above'|'right'|'left')
+
+### h.get_index({buf})
+
+Get the index of the buffer in the terminal buffer list.
+
+- Parameters:
+  - `buf`: (integer) Buffer id. By default, it will use the current buffer.
+
+- Return: (integer|nil)
+
+### h.is_term
+
+### h.list_normal_win
+
+### h.list_termbufs
+
+### h.list_termwins
+
+### h.open_buf
+
+### h.prevbuf
+
+### h.setup_autocmds
+
+### h.setup_keys
+
+### h.size
+
+### h.windata
+
+### hide
 
 ### open({win_config}, {opts})
 
@@ -86,3 +134,21 @@ Open the terminal with a separate configuration window via `win_config`.
     - `buf_call`: (fun(buf: integer)?) This function will be called within
       the `nvim_buf_call` function.
 - Return: ({ buf: integer, win: integer? })
+
+### open_in_order
+
+### open_multiple
+
+### select
+
+### setup
+
+### switch
+
+### switch_in_order
+
+### termonly
+
+### toggle
+
+### toggle_buf
