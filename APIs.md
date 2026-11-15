@@ -8,7 +8,7 @@ require('terminil') = {
   close = <function>,
   focus = <function>,
   h = {
-    buf_get_win = <function>,
+    buf_get_wins = <function>,
     cmd_to_str = <function>,
     default_split = <function>,
     get_index = <function>,
@@ -63,7 +63,7 @@ Focus on a terminal window in ascending or descending order
   - `direction`: (-1|1) Let `1` be in ascending order and `-1` in descending order.
   - `count`: (integer?) Number of increases and decreases for each time.
 
-### h.buf_get_win({buf})
+### h.buf_get_wins({buf})
 
 - Parameters
   - `buf`: (integer) Buffer id

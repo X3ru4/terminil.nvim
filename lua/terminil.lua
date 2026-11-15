@@ -145,7 +145,7 @@ function H.open_buf(buf, win_config)
 	H.windata[buf] = win_config or H.windata[buf]
 	local win = nil
 	if H.windata[buf] then
-		local wins = H.buf_get_win(buf)
+		local wins = H.buf_get_wins(buf)
 		if #wins > 0 then
 			if #wins == 1 and api.nvim_win_is_valid(wins[1]) then
 				win = wins[1]
@@ -199,7 +199,7 @@ end
 
 ---@param buf integer
 ---@return integer[] : Returns a list containing the windows that are currently open in a buffer on a given tab page
-function H.buf_get_win(buf)
+function H.buf_get_wins(buf)
 	return vim.tbl_filter(function(win)
 		return api.nvim_win_get_buf(win) == buf
 	end, api.nvim_tabpage_list_wins(0))
@@ -285,7 +285,7 @@ function M.close(buf)
 	if not H.is_term(buf) then
 		return
 	end
-	local wins = H.buf_get_win(buf)
+	local wins = H.buf_get_wins(buf)
 	if #wins > 0 and H.windata[buf] then
 		for _, win in ipairs(wins) do
 			local normal_wins = H.list_normal_win()
@@ -307,7 +307,7 @@ function M.hide(buf)
 		return
 	end
 	vim.bo[buf].buflisted = false
-	local wins = H.buf_get_win(buf)
+	local wins = H.buf_get_wins(buf)
 	if #wins > 0 and H.windata[buf] then
 		for _, win in ipairs(wins) do
 			local normal_wins = H.list_normal_win()
@@ -563,7 +563,7 @@ function M.switch(direction, count)
 	end
 
 	local next_buf = termbufs[next_idx]
-	local opening_wins = H.buf_get_win(next_buf)
+	local opening_wins = H.buf_get_wins(next_buf)
 	H.windata[next_buf] = H.windata[current_buf]
 
 	if opening_wins[1] and opening_wins[1] ~= api.nvim_get_current_win() then
@@ -590,7 +590,7 @@ function M.switch_in_order(idx)
 	end
 	local buf = H.list_termbufs()[count]
 	if buf then
-		local opening_wins = H.buf_get_win(buf)
+		local opening_wins = H.buf_get_wins(buf)
 		if #opening_wins == 1 then
 			api.nvim_win_close(opening_wins[1], true)
 		end
@@ -618,7 +618,7 @@ function M.toggle_buf(buf)
 	if not H.is_term(buf) then
 		return
 	end
-	if next(H.buf_get_win(buf)) then
+	if next(H.buf_get_wins(buf)) then
 		M.hide(buf)
 		return
 	end
