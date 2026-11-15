@@ -40,7 +40,7 @@ M.config = {
 			end,
 			desc = 'Hide all terminals except the current one',
 		},
-		['<M-/>'] = {
+		['<M-/>'] = { -- A simple code snippet to toggle the terminal.
 			function()
 				if not vim.t.tnil_togglebuf or not H.is_term(vim.t.tnil_togglebuf) then
 					local width, height = H.size('width', 0.7), H.size('height', 0.6)
@@ -55,8 +55,17 @@ M.config = {
 						col = math.ceil((vim.o.columns - width) / 2),
 					})
 					vim.t.tnil_togglebuf = data.buf
+					vim.t.tnil_togglewin = data.win
 				else
-					M.toggle_buf(vim.t.tnil_togglebuf)
+					if api.nvim_get_current_win() == vim.t.tnil_togglewin then
+						local current_buf = api.nvim_get_current_buf()
+						if H.is_term(current_buf) then
+							vim.t.tnil_togglebuf = current_buf
+						end
+						api.nvim_win_close(vim.t.tnil_togglewin, true)
+					else
+						vim.t.nil_togglewin = M.toggle_buf(vim.t.tnil_togglebuf)
+					end
 				end
 			end,
 			mode = { 'n', 't' },
@@ -467,7 +476,7 @@ end
 ---@param opts terminil.open.opts?
 function M.open_multiple(count, cycle, opts)
 	count = count or vim.v.count1
-  cycle = (cycle and not next(cycle)) and nil or cycle
+	cycle = (cycle and not next(cycle)) and nil or cycle
 
 	local i_cycle = 1
 	if not cycle then
@@ -604,6 +613,7 @@ end
 
 ---Toggle any terminal buffer
 ---@param buf integer
+---@return integer? : window id
 function M.toggle_buf(buf)
 	if not H.is_term(buf) then
 		return
@@ -612,7 +622,7 @@ function M.toggle_buf(buf)
 		M.hide(buf)
 		return
 	end
-	H.open_buf(buf)
+	return H.open_buf(buf)
 end
 
 ---Similar to `M.toggle_buf` but with two different behaviors.
