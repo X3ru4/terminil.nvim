@@ -630,7 +630,9 @@ end
 function M.toggle(behavior)
 	behavior = behavior or 'current'
 	if behavior == 'previous' then
-		M.toggle_buf(H.prevbuf)
+		if type(H.prevbuf) == 'number' then
+			M.toggle_buf(H.prevbuf)
+		end
 	else
 		local buf = api.nvim_get_current_buf()
 		if not H.is_term(buf) and not vim.t.tnil_toggle_current_buf then
