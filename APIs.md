@@ -5,8 +5,8 @@
 Open the terminal with a separate configuration window via `win_config`.
 
 - Parameters:
-  - `win_config`. See `api-win_config`
-  - `opts` has the following options
+  - `win_config`: (vim.api.keyset.win_config?) See `api-win_config`
+  - `opts`: (terminil.open.opts?) has the following options
     - `cmd`: (string|string[]?)
     - `default`: (boolean?) If set to `true`, it will use the default window
       configuration from `M.config.win_config`, and vice versa
