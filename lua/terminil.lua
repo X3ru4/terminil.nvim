@@ -197,8 +197,8 @@ function H.list_normal_win()
 	end, api.nvim_tabpage_list_wins(0))
 end
 
----@param buf integer : Returns a list containing the windows that are currently open in a buffer on a given tab page
----@return integer[]
+---@param buf integer
+---@return integer[] : Returns a list containing the windows that are currently open in a buffer on a given tab page
 function H.buf_get_win(buf)
 	return vim.tbl_filter(function(win)
 		return api.nvim_win_get_buf(win) == buf
@@ -445,10 +445,10 @@ function M.termonly(behavior, buf)
 	end
 end
 
----Add terminals by number
----It's very useful if you don't want to work across multiple windows.
+---Create one or more different terminal buffers.
+---It can inherit the configuration of the currently open terminal window.
 ---@param count integer? Number of buffers to add. Default uses vim.v.count1
----@param open boolean? If true, the last added buffer will be automatically opened, and vice versa
+---@param open boolean? If `true` it will open the last created buffer
 function M.add(count, open)
 	count = count or vim.v.count1
 	local current_buf = api.nvim_get_current_buf()
@@ -503,7 +503,7 @@ function M.open_multiple(count, cycle, opts)
 	end
 end
 
----Focus on the terminal windows in order
+---Focus on a terminal window in ascending or descending order
 ---@param direction -1|1
 ---@param count integer?
 function M.focus(direction, count)

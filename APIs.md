@@ -1,6 +1,77 @@
 # APIs
 
-## M.open
+## Structure
+
+```lua
+require('terminil') = {
+  add = <function>,
+  close = <function>,
+  focus = <function>,
+  h = {
+    buf_get_win = <function>,
+    cmd_to_str = <function>,
+    default_split = <function>,
+    get_index = <function>,
+    is_term = <function>,
+    list_normal_win = <function>,
+    list_termbufs = <function>,
+    list_termwins = <function>,
+    open_buf = <function>,
+    prevbuf = <integer>,
+    setup_autocmds = <function>,
+    setup_keys = <function>,
+    size = <function>,
+    windata = <table>
+  },
+  hide = <function>,
+  open = <function>,
+  open_in_order = <function>,
+  open_multiple = <function>,
+  select = <function>,
+  setup = <function>,
+  switch = <function>,
+  switch_in_order = <function>,
+  termonly = <function>,
+  toggle = <function>,
+  toggle_buf = <function>
+}
+
+```
+
+### add({count}, {open})
+
+Create one or more different terminal buffers.
+It can inherit the configuration of the currently open terminal window.
+
+- Parameters
+  - `count`: (integer?) Number of buffers to add. Default uses vim.v.count1.
+  - `open`: (boolean?) If `true` it will open the last created buffer.
+
+### close({buf})
+
+Close the terminal
+
+- Parameters
+  - `buf`: (integer?) The buffer ID of the terminal you want to close.
+    The default will be the current buffer.
+
+### focus({direction}, {count})
+
+Focus on a terminal window in ascending or descending order
+
+- Parameters
+  - `direction`: (-1|1) Let `1` be in ascending order and `-1` in descending order.
+  - `count`: (integer?) Number of increases and decreases for each time.
+
+### h.buf_get_win({buf})
+
+- Parameters
+  - `buf`: (integer) Buffer id
+
+- Return: (integer[]) Returns a list containing the windows that are
+  currently open in a buffer on a given tab page
+
+### open({win_config}, {opts})
 
 Open the terminal with a separate configuration window via `win_config`.
 
@@ -9,11 +80,9 @@ Open the terminal with a separate configuration window via `win_config`.
   - `opts`: (terminil.open.opts?) has the following options
     - `cmd`: (string|string[]?)
     - `default`: (boolean?) If set to `true`, it will use the default window
-      configuration from `M.config.win_config`, and vice versa
+      configuration from `M.config.win_config`, and vice versa.
     - `shell`: (string?) Set the terminal shell
     - `buf`: (integer?)
     - `buf_call`: (fun(buf: integer)?) This function will be called within
-      the `nvim_buf_call` function
-- Return: { buf: integer, win: integer? }
-
-## 😿
+      the `nvim_buf_call` function.
+- Return: ({ buf: integer, win: integer? })
