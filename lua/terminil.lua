@@ -117,7 +117,7 @@ end
 
 ---Get the default split
 ---@param split 'horizontal'|'vertical'
----@return 'below'|'above'|'right'|'left'|string
+---@return 'below'|'above'|'right'|'left'
 function H.default_split(split)
 	local splits = {
 		horizontal = vim.o.splitbelow and 'below' or 'above',
@@ -163,9 +163,10 @@ function H.open_buf(buf, win_config)
 end
 
 ---Get the index of the buffer in the terminal buffer list.
----@param buf integer
+---@param buf integer?
 ---@return integer|nil
 function H.get_index(buf)
+	buf = buf or api.nvim_get_current_buf()
 	if not H.is_term(buf) then
 		return
 	end
