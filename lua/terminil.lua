@@ -64,7 +64,7 @@ M.config = {
 						end
 						api.nvim_win_close(vim.t.tnil_togglewin, true)
 					else
-						vim.t.nil_togglewin = M.toggle_buf(vim.t.tnil_togglebuf)
+						vim.t.tnil_togglewin = M.toggle_buf(vim.t.tnil_togglebuf)
 					end
 				end
 			end,
