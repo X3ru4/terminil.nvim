@@ -558,10 +558,7 @@ function M.switch(direction, count, use_current)
 		return
 	end
 	local current_buf = api.nvim_get_current_buf()
-	local current_idx = H.get_index(current_buf) or H.prevbuf
-	if not current_idx or current_idx == 0 then
-		current_idx = termbufs[1]
-	end
+	local current_idx = H.get_index(current_buf) or H.get_index(H.prevbuf) or termbufs[1]
 	local next_idx
 	if direction < 0 then
 		local idx = current_idx - count
