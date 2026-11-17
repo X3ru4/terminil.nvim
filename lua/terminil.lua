@@ -246,6 +246,7 @@ function H.setup_autocmds()
 		end,
 	})
 	autocmd('BufEnter', {
+		group = augroup,
 		callback = function(ev)
 			if H.is_term(ev.buf) then
 				if vim.b.tnil_is_scratch then
