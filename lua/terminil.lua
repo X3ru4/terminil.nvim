@@ -23,8 +23,8 @@ local M = {}
 local H = {}
 M.h = H
 
-H.windata = {}
-H.prevbuf = 0
+H.windata = {} -- Contains window configurations for each buffer.
+H.prevbuf = 0 -- Previous terminal buffer.
 
 local api = vim.api
 
@@ -151,7 +151,7 @@ function H.open_buf(buf, win_config)
 				win = wins[1]
 				api.nvim_set_current_win(wins[1])
 			else
-				vim.notify('This buffer: ' .. buf .. ' is running across multiple windows.', vim.log.levels.WARN)
+				vim.notify('This Buffer: ' .. buf .. ' has opened in a different window.', vim.log.levels.WARN)
 			end
 		else
 			win = api.nvim_open_win(buf, true, H.windata[buf])
@@ -237,20 +237,17 @@ function H.setup_autocmds()
 		callback = function(ev)
 			H.windata[ev.buf] = nil
 			if H.prevbuf == ev.buf then
-				H.prevbuf = H.list_termbufs()[1]
+				H.prevbuf = H.list_termbufs()[1] or 0
+			end
+			if vim.t.tnil_prevbuf == ev.buf then
+				vim.t.tnil_prevbuf = H.list_termbufs()[1] or 0
 			end
 			M.config.on_exit(ev.buf, vim.v.event.status)
 		end,
 	})
-	local sus_buf = 0
 	autocmd('BufEnter', {
-		group = augroup,
 		callback = function(ev)
-			if sus_buf ~= ev.buf then
-				H.prevbuf = sus_buf
-			end
 			if H.is_term(ev.buf) then
-				sus_buf = ev.buf
 				if vim.b.tnil_is_scratch then
 					vim.opt_local.list = false
 					vim.opt_local.wrap = false
@@ -260,6 +257,15 @@ function H.setup_autocmds()
 					vim.opt_local.foldcolumn = '0'
 					vim.b.tnil_is_scratch = false
 				end
+			end
+		end,
+	})
+	autocmd('BufLeave', {
+		group = augroup,
+		callback = function(ev)
+			if H.is_term(ev.buf) then
+				vim.t.tnil_prevbuf = ev.buf
+				H.prevbuf = ev.buf
 			end
 		end,
 	})
@@ -313,7 +319,9 @@ function M.hide(buf)
 		for _, win in ipairs(wins) do
 			local normal_wins = H.list_normal_win()
 			if #normal_wins == 1 and normal_wins[1] == win then
-				vim.cmd.buffer('#')
+				api.nvim_win_call(win, function()
+					vim.cmd.buffer('#')
+				end)
 			else
 				api.nvim_win_close(win, true)
 			end
@@ -425,7 +433,7 @@ end
 function M.termonly(behavior, buf)
 	local termbufs = H.list_termbufs()
 	buf = buf or api.nvim_get_current_buf()
-	if not next(termbufs) or not H.is_term(buf) then
+	if not next(termbufs) or not H.is_term(buf) or not next(H.buf_get_wins(buf)) then
 		return
 	end
 	behavior = behavior or 'hide'
@@ -437,7 +445,9 @@ function M.termonly(behavior, buf)
 		if bufnr ~= buf then
 			if behavior == 'close' then
 				if choice == 1 then
-					M.close(bufnr)
+					if next(H.buf_get_wins(bufnr)) then
+						M.close(bufnr)
+					end
 				end
 			else
 				M.hide(bufnr)
@@ -540,16 +550,17 @@ local switch_echo
 ---Switch to a different terminal in the current window in order
 ---@param direction -1|1
 ---@param count integer?
-function M.switch(direction, count)
+---@param use_current boolean? Use the current terminal buffer's window configuration.
+function M.switch(direction, count, use_current)
 	count = count or vim.v.count1
 	local termbufs = H.list_termbufs()
 	if not next(termbufs) then
 		return
 	end
 	local current_buf = api.nvim_get_current_buf()
-	local current_idx = H.get_index(current_buf)
-	if not current_idx then
-		return
+	local current_idx = H.get_index(current_buf) or H.prevbuf
+	if not current_idx or current_idx == 0 then
+		current_idx = termbufs[1]
 	end
 	local next_idx
 	if direction < 0 then
@@ -564,12 +575,10 @@ function M.switch(direction, count)
 	end
 
 	local next_buf = termbufs[next_idx]
-	local opening_wins = H.buf_get_wins(next_buf)
-	H.windata[next_buf] = H.windata[current_buf]
-
-	if opening_wins[1] and opening_wins[1] ~= api.nvim_get_current_win() then
-		api.nvim_win_close(opening_wins[1], true)
+	if use_current then
+		H.windata[next_buf] = H.windata[current_buf]
 	end
+
 	api.nvim_win_set_buf(0, next_buf)
 
 	switch_echo = api.nvim_echo({
@@ -584,16 +593,17 @@ end
 
 ---Similar to the `M.switch` function, but with the index you want
 ---@param idx integer? > 0
-function M.switch_in_order(idx)
+---@param use_current boolean? Use the current terminal buffer's window configuration.
+function M.switch_in_order(idx, use_current)
 	local count = idx or vim.v.count
 	if count < 1 then
 		return
 	end
+
 	local buf = H.list_termbufs()[count]
 	if buf then
-		local opening_wins = H.buf_get_wins(buf)
-		if #opening_wins == 1 then
-			api.nvim_win_close(opening_wins[1], true)
+		if use_current then
+			H.windata[buf] = H.windata[api.nvim_get_current_buf()]
 		end
 		api.nvim_win_set_buf(0, buf)
 	end
