@@ -126,11 +126,11 @@ function H.default_split(split)
 	return splits[split]
 end
 
----@param axis 'height'|'width'
+---@param target 'height'|'width'
 ---@param percent number 0.0->1.0
----@return number
-function H.size(axis, percent)
-	local total = axis == 'height' and vim.o.lines or vim.o.columns
+---@return integer
+function H.size(target, percent)
+	local total = target == 'height' and vim.o.lines or vim.o.columns
 	return math.ceil(total * percent)
 end
 
