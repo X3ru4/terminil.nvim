@@ -96,7 +96,7 @@ Get the index of the buffer in the terminal buffer list.
 
 - Return: (integer|nil)
 
-### h.is_term(buf)
+### h.is_term({buf})
 
 Check if that buffer is a terminal buffer. If it is, return `true`;
 otherwise, return `false`.
@@ -118,7 +118,7 @@ otherwise, return `false`.
 
 - Return: (integer[]) Returns a list of currently open terminal windows
 
-### h.open_buf(buf, win_config)
+### h.open_buf({buf}, {win_config})
 
 Open terminal buffer more intelligently
 
@@ -138,11 +138,11 @@ Default value: `0`. Note that `vim.t.tnil_prevbuf` may be `nil`.
 
 Set up autocmds
 
-### h.setup_keys(keys)
+### h.setup_keys({keys})
 
 Set up keymaps
 
-### h.size(target, percent)
+### h.size({target}, {percent})
 
 Calculate the ratio of the height or width.
 
@@ -158,7 +158,7 @@ The variable contains the window configurations for each buffer.
 
 - Type: (vim.api.keyset.win_config[])
 
-### hide(buf)
+### hide({buf})
 
 Hide the terminal
 
