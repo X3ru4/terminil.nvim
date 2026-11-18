@@ -42,7 +42,7 @@ M.config = {
 		},
 		['<M-/>'] = { -- A simple code snippet to toggle the terminal.
 			function()
-				if not vim.t.tnil_togglebuf or not H.is_term(vim.t.tnil_togglebuf) then
+				if not vim.t.tnil_toggle_float_buf or not H.is_term(vim.t.tnil_toggle_float_buf) then
 					local width, height = H.size('width', 0.7), H.size('height', 0.6)
 					local data = M.open({
 						relative = 'editor',
@@ -54,17 +54,17 @@ M.config = {
 						row = math.ceil((vim.o.lines - height) / 2) - 2,
 						col = math.ceil((vim.o.columns - width) / 2),
 					})
-					vim.t.tnil_togglebuf = data.buf
-					vim.t.tnil_togglewin = data.win
+					vim.t.tnil_toggle_float_buf = data.buf
+					vim.t.tnil_toggle_float_win = data.win
 				else
-					if api.nvim_get_current_win() == vim.t.tnil_togglewin then
+					if api.nvim_get_current_win() == vim.t.tnil_toggle_float_win then
 						local current_buf = api.nvim_get_current_buf()
 						if H.is_term(current_buf) then
-							vim.t.tnil_togglebuf = current_buf
+							vim.t.tnil_toggle_float_buf = current_buf
 						end
-						api.nvim_win_close(vim.t.tnil_togglewin, true)
+						api.nvim_win_close(vim.t.tnil_toggle_float_win, true)
 					else
-						vim.t.tnil_togglewin = M.toggle_buf(vim.t.tnil_togglebuf)
+						vim.t.tnil_toggle_float_win = M.toggle_buf(vim.t.tnil_toggle_float_buf)
 					end
 				end
 			end,
@@ -258,6 +258,9 @@ function H.setup_autocmds()
 					vim.opt_local.foldcolumn = '0'
 					vim.b.tnil_is_scratch = false
 				end
+				if vim.b.tnil_listed then
+					vim.bo.buflisted = true
+				end
 			end
 		end,
 	})
@@ -315,6 +318,9 @@ function M.hide(buf)
 	buf = buf or current_buf
 	if not H.is_term(buf) then
 		return
+	end
+	if vim.b[buf].tnil_listed == nil then
+		vim.b[buf].tnil_listed = vim.bo[buf].buflisted
 	end
 	vim.bo[buf].buflisted = false
 	local wins = H.buf_get_wins(buf)
@@ -640,20 +646,28 @@ end
 ---@param behavior 'current'|'previous'? 'current' toggle terminal buffer is currently open.The 'previous' toggle terminal was previously opened
 function M.toggle(behavior)
 	behavior = behavior or 'current'
-	if behavior == 'previous' then
-		if type(H.prevbuf) == 'number' then
-			M.toggle_buf(H.prevbuf)
-		end
+	local behaviors = {
+		current = function()
+			local buf = api.nvim_get_current_buf()
+			if not H.is_term(buf) and not vim.t.tnil_toggle_current_buf then
+				return
+			end
+			if H.is_term(buf) and vim.t.tnil_toggle_current_buf and buf ~= H.prevbuf then
+				vim.t.tnil_toggle_current_buf = buf
+			end
+			vim.t.tnil_toggle_current_buf = vim.t.tnil_toggle_current_buf or buf
+			M.toggle_buf(vim.t.tnil_toggle_current_buf)
+		end,
+		previous = function()
+			if H.prevbuf > 0 then
+				M.toggle_buf(H.prevbuf)
+			end
+		end,
+	}
+	if behaviors[behavior] then
+		behaviors[behavior]()
 	else
-		local buf = api.nvim_get_current_buf()
-		if not H.is_term(buf) and not vim.t.tnil_toggle_current_buf then
-			return
-		end
-		if H.is_term(buf) and vim.t.tnil_toggle_current_buf and buf ~= H.prevbuf then
-			vim.t.tnil_toggle_current_buf = buf
-		end
-		vim.t.tnil_toggle_current_buf = vim.t.tnil_toggle_current_buf or buf
-		M.toggle_buf(vim.t.tnil_toggle_current_buf)
+		vim.notify('Undefined behavior: ' .. behavior, vim.log.levels.WARN)
 	end
 end
 
