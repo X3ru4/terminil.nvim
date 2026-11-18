@@ -264,10 +264,12 @@ function H.setup_autocmds()
 	autocmd('BufLeave', {
 		group = augroup,
 		callback = function(ev)
-			if H.is_term(ev.buf) then
-				vim.t.tnil_prevbuf = ev.buf
-				H.prevbuf = ev.buf
-			end
+			vim.schedule(function()
+				if H.is_term(ev.buf) then
+					vim.t.tnil_prevbuf = ev.buf
+					H.prevbuf = ev.buf
+				end
+			end)
 		end,
 	})
 end
