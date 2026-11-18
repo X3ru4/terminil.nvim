@@ -84,7 +84,6 @@ Get the default split
 
 - Parameters:
   - `split`: ('horizontal'|'vertical') Split direction
-    ''
 
 - Return: ('below'|'above'|'right'|'left')
 
@@ -97,34 +96,81 @@ Get the index of the buffer in the terminal buffer list.
 
 - Return: (integer|nil)
 
-### h.is_term
+### h.is_term(buf)
 
-### h.list_normal_win
+Check if that buffer is a terminal buffer. If it is, return `true`;
+otherwise, return `false`.
 
-### h.list_termbufs
+- Parameters:
+  - `buf`: (integer) Buffer id
 
-### h.list_termwins
+- Return: (boolean)
 
-### h.open_buf
+### h.list_normal_win()
+
+- Return: (integer[]) Returns a list of normal windows
+
+### h.list_termbufs()
+
+- Return: (integer[]) Returns a list of terminal buffers
+
+### h.list_termwins()
+
+- Return: (integer[]) Returns a list of currently open terminal windows
+
+### h.open_buf(buf, win_config)
+
+Open terminal buffer more intelligently
+
+- Parameters:
+  - `buf`: (integer) Buffer id
+  - `win_config`: (vim.api.keyset.win_config?) See `nvim_open_win()`
 
 ### h.prevbuf
 
-### h.setup_autocmds
+This variable stores the previously opened terminal buffer.
+There is a similar variable `vim.t.tnil_prevbuf` but it's in the tabpage scope.
+Default value: `0`. Note that `vim.t.tnil_prevbuf` may be `nil`.
 
-### h.setup_keys
+- Type: (integer)
 
-### h.size
+### h.setup_autocmds()
+
+Set up autocmds
+
+### h.setup_keys(keys)
+
+Set up keymaps
+
+### h.size(target, percent)
+
+Calculate the ratio of the height or width.
+
+- Parameters:
+  - `target`: ('height'|'width')
+  - `percent`: (number) 0.0 -> 1.0
+
+- Return: (integer)
 
 ### h.windata
 
-### hide
+The variable contains the window configurations for each buffer.
+
+- Type: (vim.api.keyset.win_config[])
+
+### hide(buf)
+
+Hide the terminal
+
+- Parameters:
+  - `buf`: (integer) Buffer ID. The default is the current buffer.
 
 ### open({win_config}, {opts})
 
 Open the terminal with a separate configuration window via `win_config`.
 
 - Parameters:
-  - `win_config`: (vim.api.keyset.win_config?) See `api-win_config`
+  - `win_config`: (vim.api.keyset.win_config?) See `nvim_open_win()`
   - `opts`: (terminil.open.opts?) has the following options
     - `cmd`: (string|string[]?)
     - `default`: (boolean?) If set to `true`, it will use the default window
