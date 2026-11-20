@@ -195,6 +195,7 @@ Open multiple terminal windows at the same time.
 - Parameters:
   - `count`: (integer?) The number of terminal windows you want to open.
   - `cycle`: (string[]|vim.api.keyset.win_config[]?) Window cycle configuration
+    [See.](https://github.com/X3ru4/terminil.nvim#open-multiple-windows-at-the-same-time)
   - `opts`: (terminil.open.opts?) Terminal options
 
 ### select({behavior}, {ui_select})
@@ -212,7 +213,7 @@ List all terminal buffers using the `vim.ui.select` or `ui_select` function.
 Setup terminil.nvim
 
 - Parameters:
-  - `opts`: (terminil.opts?) [See](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L1-L8)
+  - `opts`: (terminil.opts?) [See.](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L1-L8)
 
 ### switch({direction}, {count}, {use_current})
 
