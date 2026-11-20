@@ -615,7 +615,7 @@ function M.switch_in_order(idx, use_current)
 	end
 end
 
----Similar to the `H.open_buf` function, but with the index you want
+---Open the terminal buffer using its index.
 ---@param idx integer? > 0
 function M.open_in_order(idx)
 	local count = idx or vim.v.count
@@ -630,7 +630,7 @@ end
 
 ---Toggle any terminal buffer
 ---@param buf integer
----@return integer? : window id
+---@return integer|nil : window id
 function M.toggle_buf(buf)
 	if not H.is_term(buf) then
 		return
