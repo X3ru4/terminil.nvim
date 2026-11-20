@@ -679,6 +679,7 @@ function M.setup(opts)
 	if M.config.use_default_keys then
 		H.setup_keys(M.config.keys)
 	end
+	_G.tnil = M
 end
 
 return M

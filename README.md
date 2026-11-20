@@ -21,9 +21,9 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim)
 return {
     'X3ru4/terminil.nvim',
     event = 'VeryLazy',
-    ---@module 'terminil'
-    ---@type terminil.opts
-    opts = {},
+    config = function()
+        require('terminil').setup()
+    end
 }
 ```
 
@@ -42,14 +42,21 @@ require('terminil').setup()
 
 ### [APIs](https://github.com/X3ru4/terminil.nvim/blob/main/APIs.md)
 
+### Global variable
+
+This variable will be set when the `setup()` function is run.
+
+```lua
+_G.tnil = require('terminil')
+```
+
 ### Terminal in floating window
 
 ```lua
-local terminil = require('terminil')
 vim.keymap.set('n', '<leader>tf', function()
-    local width = terminil.h.size('width', 0.7)
-    local height = terminil.h.size('height', 0.6)
-    terminil.open({
+    local width = tnil.h.size('width', 0.7)
+    local height = tnil.h.size('height', 0.6)
+    tnil.open({
         relative = 'editor',
         title = ' >_ Terminal ',
         title_pos = 'center',
@@ -66,7 +73,7 @@ end)
 
 ```lua
 vim.keymap.set('n', '...', function()
-    terminil.open({ split = 'below' }, {
+    tnil.open({ split = 'below' }, {
         cmd = { 'git status', 'fzf' }, -- or 'git status'
     })
 end)
@@ -75,7 +82,7 @@ end)
 ### Give the terminal a custom name using the `buf_call` function
 
 ```lua
-terminil.open(nil, {
+tnil.open(nil, {
     buf_call = function(buf)
         vim.api.nvim_buf_set_name(buf, 'Terminil hihi')
     end,
@@ -85,27 +92,27 @@ terminil.open(nil, {
 ### Open with a different shell
 
 ```lua
-terminil.open(nil, { shell = 'zsh' })
+tnil.open(nil, { shell = 'zsh' })
 ```
 
 ### Keymaps
 
 ```lua
 local buf = nil
-terminil.setup({
+tnil.setup({
     keys = {
         -- Set it to false to disable keymap
         ['<C-t>t'] = false,
         -- Create your own keymaps. See: vim.keymap.set()
         ['<M-/>'] = {
             function() -- rhs
-                if not buf or not terminil.h.is_term(buf) then
-                    local data = terminil.open({
+                if not buf or not tnil.h.is_term(buf) then
+                    local data = tnil.open({
                         split = 'below',
                     })
                     buf = data.buf
                 else
-                    terminil.toggle_buf(buf)
+                    tnil.toggle_buf(buf)
                 end
             end,
             mode = { 'n', 't' }, -- Default: mode = 't'
@@ -121,27 +128,27 @@ terminil.setup({
 ### Open multiple windows at the same time
 
 ```lua
-terminil.open_multiple(count?, cycle?, opts?)
+tnil.open_multiple(count?, cycle?, opts?)
 ```
 
 Split according to your style, and it will repeat your configuration in cycles.
 
 ```lua
-terminil.open_multiple(5, { 'above', { split = 'left', width = 10 }, 'right' })
+tnil.open_multiple(5, { 'above', { split = 'left', width = 10 }, 'right' })
 ```
 
 ### Add more terminals
 
 ```lua
-terminil.add(count?: integer, open?: boolean)
+tnil.add(count?: integer, open?: boolean)
 
-terminil.add(3)
+tnil.add(3)
 ```
 
 By default, `count` will use the variable vim.v.count1 as the default.
 
 ```lua
-terminil.add()
+tnil.add()
 ```
 
 ### Switch between terminals and move to different windows
@@ -150,37 +157,37 @@ Most functions use the count prefix
 
 ```lua
 -- Switch to a different terminal in the current window
-terminil.switch(-1) -- switch to the previous terminal
-terminil.switch(1)  -- switch to the next terminal
+tnil.switch(-1) -- switch to the previous terminal
+tnil.switch(1)  -- switch to the next terminal
 
-terminil.focus(-1)  -- Jump to the previous terminal window
-terminil.focus(1)   -- Jump to the next terminal window
+tnil.focus(-1)  -- Jump to the previous terminal window
+tnil.focus(1)   -- Jump to the next terminal window
 ```
 
 Use indexes for control
 
 ```lua
-terminil.switch_in_order(idx?: integer)
-terminil.open_in_order(idx?: integer)
+tnil.switch_in_order(idx?: integer)
+tnil.open_in_order(idx?: integer)
 
 -- For example: If you hide a window or terminal and it has the number 1
 -- then you press the key combination `1<leader>tt` and it will open the terminal.
-vim.keymap.set('n', '<leader>tt', terminil.open_in_order)
+vim.keymap.set('n', '<leader>tt', tnil.open_in_order)
 ```
 
 ### Hide and close the terminal
 
 ```lua
-terminil.hide(buf?: integer)
-terminil.close(buf?: integer)
+tnil.hide(buf?: integer)
+tnil.close(buf?: integer)
 ```
 
 ### Toggle terminal
 
 ```lua
-terminil.toggle('current')  -- Toggle current terminal
-terminil.toggle('previous') -- Toggle previous terminal
-terminil.toggle_buf(buf: integer)    -- Toggle terminal buf
+tnil.toggle('current')  -- Toggle current terminal
+tnil.toggle('previous') -- Toggle previous terminal
+tnil.toggle_buf(buf: integer)    -- Toggle terminal buf
 ```
 
 - Default keymaps
@@ -197,7 +204,7 @@ terminil.toggle_buf(buf: integer)    -- Toggle terminal buf
 -- |'open'   Open terminal.
 -- |'switch' Open the selected terminal in the current window.
 -- |'close'  Close the selected terminal.
-terminil.select(behavior?: 'open'|'switch'|'close', ui_select?)
+tnil.select(behavior?: 'open'|'switch'|'close', ui_select?)
 ```
 
 ### Termonly
@@ -207,5 +214,5 @@ Similar to the `tabonly` command. See `:tabonly`
 ```lua
 -- `behavior` default is 'hide'. Be careful when using 'close'.
 -- 'buf'      default is current buffer
-terminil.termonly(behavior?: 'close'|'hide', buf?: integer)
+tnil.termonly(behavior?: 'close'|'hide', buf?: integer)
 ```
