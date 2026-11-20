@@ -181,20 +181,79 @@ Open the terminal with a separate configuration window via `win_config`.
       the `nvim_buf_call` function.
 - Return: ({ buf: integer, win: integer? })
 
-### open_in_order
+### open_in_order({idx})
 
-### open_multiple
+Open the terminal buffer using its index.
 
-### select
+- Parameters:
+  - `idx`: (integer?) The index of the terminal buffer. The default is `vim.v.count`.
 
-### setup
+### open_multiple({count}, {cycle}, {opts})
 
-### switch
+Open multiple terminal windows at the same time.
 
-### switch_in_order
+- Parameters:
+  - `count`: (integer?) The number of terminal windows you want to open.
+  - `cycle`: (string[]|vim.api.keyset.win_config[]?) Window cycle configuration
+  - `opts`: (terminil.open.opts?) Terminal options
 
-### termonly
+### select({behavior}, {ui_select})
 
-### toggle
+List all terminal buffers using the `vim.ui.select` or `ui_select` function.
 
-### toggle_buf
+- Parameters:
+  - `behavior`: ('open'|'switch'|'close'?) The behavior that will be performed
+    after selecting a buffer.
+  - `ui_select`: (function?) Use this to replace the `vim.ui.select` function if
+    you want to use a different function.
+
+### setup({opts})
+
+Setup terminil.nvim
+
+- Parameters:
+  - `opts`: (terminil.opts?) [See](https://github.com/X3ru4/terminil.nvim/blob/main/lua/terminil.lua#L1-L8)
+
+### switch({direction}, {count}, {use_current})
+
+Switch to a different terminal in the current window in order
+
+- Parameters:
+  - `direction`: (-1|1) Set `1` to open the next terminal buffer and set `-1` to
+    open the previous terminal buffer.
+  - `count`: (integer?) Quantity to be ignored
+  - `use_current`: (boolean?) Use the current terminal buffer's window configuration.
+
+### switch_in_order({idx}, {use_current})
+
+Similar to the `open_in_order()` function, but with the same behavior as the
+`switch()` function.
+
+- Parameters:
+  - `idx`: (integer?) The index of the terminal buffer.
+  - `use_current`: (boolean?) Use the current terminal buffer's window configuration.
+
+### termonly({behavior}, {buf})
+
+Similar to the `tabonly` command, which has two different behaviors.
+
+- Parameters:
+  - `behavior`: ('hide'|'close'?) Be careful when using 'close'
+  - `buf`: (integer?) Buffer id
+
+### toggle({behavior})
+
+Similar to `M.toggle_buf` but with two different behaviors.
+
+- Parameters:
+  - `behavior`: ('current'|'previous'?) 'current' toggle terminal buffer is
+    currently open.The 'previous' toggle terminal was previously opened
+
+### toggle_buf({buf})
+
+Toggle any terminal buffer
+
+- Parameters:
+  - `buf`: (integer) Buffer id
+
+- Return: (integer|nil) Window id
