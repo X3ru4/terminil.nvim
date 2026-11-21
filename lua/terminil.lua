@@ -437,6 +437,7 @@ function M.select(behavior, ui_select)
 end
 
 ---Similar to the `tabonly` command, which has two different behaviors.
+---NOTE: This behavior only applies to windows currently open in the current tabpage.
 ---@param behavior 'hide'|'close'? Be careful when using 'close'
 ---@param buf integer?
 function M.termonly(behavior, buf)

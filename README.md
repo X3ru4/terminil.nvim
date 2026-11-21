@@ -211,6 +211,9 @@ tnil.select(behavior?: 'open'|'switch'|'close', ui_select?)
 
 Similar to the `tabonly` command. See `:tabonly`
 
+> [!NOTE]
+> This behavior only applies to windows currently open in the current tabpage.
+
 ```lua
 -- `behavior` default is 'hide'. Be careful when using 'close'.
 -- 'buf'      default is current buffer

@@ -238,6 +238,9 @@ Similar to the `open_in_order()` function, but with the same behavior as the
 
 Similar to the `tabonly` command, which has two different behaviors.
 
+> [!NOTE]
+> This behavior only applies to windows currently open in the current tabpage.
+
 - Parameters:
   - `behavior`: ('hide'|'close'?) Be careful when using 'close'
   - `buf`: (integer?) Buffer id
